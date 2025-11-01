@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Finance App</h1>
+
+{% if user.is_authenticated %}
+    <p>Welcome, {{ user.username }} 👋</p>
+
+    <!-- Logout через POST -->
+    <form method="post" action="{% url 'logout' %}">
+        {% csrf_token %}
+        <button type="submit">Logout</button>
+    </form>
+
+{% else %}
+    <p>You are not logged in.</p>
+    <p><a href="{% url 'login' %}">Login</a></p>
+{% endif %}
+{% endblock %}

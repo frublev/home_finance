@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block title %}{{ account.name }} | f.rublev{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">Account Details</h2>
+
+<form method="post">
+    {% csrf_token %}
+    <div class="mb-3">
+        <label class="form-label">Name</label>
+        {{ form.name }}
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Balance</label>
+        {{ form.balance }}
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Currency</label>
+        {{ form.currency }}
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Created by</label>
+        <input type="text" class="form-control" value="{{ account.created_by.username }}" readonly>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Created at</label>
+        <input type="text" class="form-control" value="{{ account.datetime|date:'Y-m-d H:i' }}" readonly>
+    </div>
+
+    <button type="submit" class="btn btn-success">Save changes</button>
+    <a href="{% url 'account_delete' account.id %}" class="btn btn-danger">🗑 Delete</a>
+    <a href="{% url 'bank_and_cash' %}" class="btn btn-secondary">Back</a>
+</form>
+{% endblock %}

@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Create Account</h2>
+
+<form method="post">
+    {% csrf_token %}
+    <div class="mb-3">
+        <label class="form-label">Name</label>
+        {{ form.name }}
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Balance</label>
+        {{ form.balance }}
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Currency</label>
+        {{ form.currency }}
+    </div>
+    <button type="submit" class="btn btn-success">Create</button>
+    <a href="{% url 'bank_and_cash' %}" class="btn btn-secondary">Cancel</a>
+</form>
+{% endblock %}

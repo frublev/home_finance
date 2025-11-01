@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}Edit Transfer{% endblock %}
+
+{% block content %}
+<h2 class="mb-4 text-primary">Edit Transfer</h2>
+
+{% if form.non_field_errors %}
+<div class="alert alert-danger">
+    {{ form.non_field_errors }}
+</div>
+{% endif %}
+
+<form method="post">
+    {% csrf_token %}
+
+    <div class="mb-3">
+        {{ form.from_account.label_tag }}
+        {{ form.from_account }}
+    </div>
+
+    <div class="mb-3">
+        {{ form.to_account.label_tag }}
+        {{ form.to_account }}
+    </div>
+
+    <div class="mb-3">
+        {{ form.amount.label_tag }}
+        {{ form.amount }}
+    </div>
+
+    <div class="mb-3">
+        {{ form.category.label_tag }}
+        {{ form.category }}
+    </div>
+
+    <div class="mb-3">
+        {{ form.description.label_tag }}
+        {{ form.description }}
+    </div>
+
+    <div class="mb-3">
+        {{ form.transaction_time.label_tag }}
+        {{ form.transaction_time }}
+    </div>
+
+    <button type="submit" class="btn btn-success">Save changes</button>
+    <a href="{% url 'transfer_list' %}" class="btn btn-secondary">Back</a>
+    <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal">Delete</button>
+</form>
+
+<!-- Модальное окно подтверждения -->
+<div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-labelledby="confirmDeleteLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-header bg-danger text-white">
+        <h5 class="modal-title" id="confirmDeleteLabel">Confirm Deletion</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        Are you sure you want to delete this transaction?<br>
+        This action cannot be undone.
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+
+        <form method="post" action="{% url 'delete_transfer' transfer_id %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger">Yes, delete</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

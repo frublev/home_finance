@@ -1,0 +1,135 @@
+body {
+    background-color: #f8f6ef;
+    font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+    color: #1f3b1f;
+}
+.navbar {
+    background-color: #ffffff;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+}
+.navbar-brand {
+    font-weight: 600;
+    color: #2f6b2f !important;
+    font-size: 1.5rem;
+}
+.navbar-brand span {
+    color: #4a954a;
+}
+.container {
+    max-width: 900px;
+}
+footer {
+    margin-top: 40px;
+    padding: 20px 0;
+    text-align: center;
+    font-size: 0.9rem;
+    color: #777;
+}
+a {
+    color: #2f6b2f;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+a:hover, a:focus {
+    color: #4a954a;
+    text-decoration: underline;
+}
+a:active {
+    color: #1f3b1f;
+}
+table a {
+    font-weight: 500;
+}
+
+form .form-control {
+    border-radius: 0.5rem;
+    border: 1px solid #cdd8cd;
+    box-shadow: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+form .form-control:focus {
+    border-color: #4a954a;
+    box-shadow: 0 0 0 0.2rem rgba(74, 149, 74, 0.15);
+}
+.btn-success {
+    background-color: #4a954a;
+    border: none;
+}
+.btn-success:hover {
+    background-color: #3d7e3d;
+}
+.btn-outline-success {
+    border-color: #4a954a;
+    color: #4a954a;
+}
+.btn-outline-success:hover {
+    background-color: #4a954a;
+    color: white;
+}
+
+.balance-cell {
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+    padding-right: 1em;
+}
+
+.navbar .nav-link {
+    color: #333;
+    transition: color 0.2s ease;
+}
+
+.navbar .nav-link:hover,
+.navbar .nav-link:focus {
+    color: #198754; /* Bootstrap green */
+}
+
+/* Подсветка при открытом dropdown */
+.navbar .dropdown-toggle.show,
+.navbar .dropdown-toggle:hover {
+    color: #198754;
+}
+
+/* Стили для выпадающего меню */
+.dropdown-menu {
+    border-radius: 0.5rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.dropdown-item:hover {
+    background-color: #e8f5e9;
+    color: #198754;
+}
+
+.clickable-row {
+  cursor: pointer;
+  transition: background-color 0.15s ease-in-out;
+}
+
+/* Альтернатива — мягкий зелёный, если хочешь фирменную палитру */
+.clickable-row:hover {
+  background-color: #e8f5e9; /* светло-зелёный */
+}
+
+.filters {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.filter-link {
+  color: #198754; /* зелёный */
+  text-decoration: none;
+  font-weight: 500;
+  padding: 4px 10px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.filter-link:hover {
+  background-color: #e8f5e9; /* светло-зелёный фон */
+}
+
+.filter-link.active {
+  background-color: #198754;
+  color: white !important;
+}

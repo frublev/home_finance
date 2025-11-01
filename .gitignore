@@ -1,0 +1,19 @@
+venv/
+
+# env-переменные
+.env
+
+# pycache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# IDE (PyCharm, VSCode)
+.idea/
+.vscode/
+
+# логи
+*.log
+
+# media/uploads (если не хочешь хранить их в git)
+media/

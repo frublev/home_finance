@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Outcome{% endblock %}
+{% block content %}
+<h2 class="mb-4 text-danger">Outcome</h2>
+
+<a href="{% url 'add_transaction' 'Outcome' %}" class="btn btn-danger mb-3">－ Add Outcome</a>
+<p>DEBUG: {% url 'add_transaction' 'outcome' %}</p>
+
+<table class="table table-hover align-middle shadow-sm rounded">
+  <thead class="table-danger">
+    <tr>
+      <th>Date</th>
+      <th>Account</th>
+      <th>Category</th>
+      <th>Amount</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for transaction in transactions %}
+      <tr data-href="{% url 'edit_transaction' transaction.id %}">
+        <td>{{ transaction.transaction_time|date:"Y-m-d H:i" }}</td>
+        <td>{{ transaction.account.name }}</td>
+        <td>{{ transaction.category.name }}</td>
+        <td>{{ transaction.amount }}</td>
+        <td>{{ transaction.description }}</td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="5" class="text-center text-muted">No outcome transactions</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

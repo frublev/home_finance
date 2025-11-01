@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block title %}{{ category.name }} | f.rublev{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">Category Details</h2>
+
+<form method="post">
+    {% csrf_token %}
+    <div class="mb-3">
+        <label class="form-label">Name</label>
+        {{ form.name }}
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Type</label>
+        {{ form.type }}
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Description</label>
+        {{ form.description }}
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Created by</label>
+        <input type="text" class="form-control" value="{{ category.created_by.username }}" readonly>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Created at</label>
+        <input type="text" class="form-control" value="{{ category.datetime|date:'Y-m-d H:i' }}" readonly>
+    </div>
+
+    <button type="submit" class="btn btn-success">Save changes</button>
+    <a href="{% url 'category_delete' category.id %}" class="btn btn-danger">🗑 Delete</a>
+    <a href="{% url 'category' %}" class="btn btn-secondary">Back</a>
+</form>
+{% endblock %}

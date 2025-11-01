@@ -1,0 +1,17 @@
+tr[data-href] {
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+/* Цвет подсветки можно менять классом таблицы */
+.table-success tr[data-href]:hover {
+  background-color: #f5fff5;
+}
+
+.table-danger tr[data-href]:hover {
+  background-color: #fff5f5;
+}
+
+.table-primary tr[data-href]:hover {
+  background-color: #f0f8ff;
+}
