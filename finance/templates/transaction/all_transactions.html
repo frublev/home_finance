@@ -17,7 +17,7 @@
 
     <!-- Фильтры по типу -->
     <div class="d-flex" style="gap: 1rem;">
-      <a href="?{% for key, value in request.GET.items %}{% if key != 'type' %}{{ key }}={{ value }}&{% endif %}{% endfor %}"
+      <a href="?{% for key, value in request.GET.items %}{% if key != 'type' %}{{ key }}={{ value }}&{% endif %}{% endfor %}type=None"
         class="type-filter-link {% if active_type == 'None' %}active{% endif %}">All</a>
       <a href="?{% for key, value in request.GET.items %}{% if key != 'type' %}{{ key }}={{ value }}&{% endif %}{% endfor %}type=income"
         class="type-filter-link {% if active_type == 'income' %}active{% endif %}">Income</a>

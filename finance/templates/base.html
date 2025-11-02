@@ -34,18 +34,8 @@
 
     <div class="collapse navbar-collapse justify-content-end" id="navbarSupportedContent">
       <ul class="navbar-nav mb-2 mb-lg-0">
-        <!-- Dropdown Transactions -->
-        <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle" href="{% url 'income_list' %}" id="transactionsDropdown"
-             role="button" data-bs-toggle="dropdown" aria-expanded="false">
-            Transactions
-          </a>
-          <ul class="dropdown-menu" aria-labelledby="transactionsDropdown">
-            <li><a class="dropdown-item" href="{% url 'income_list' %}">Income</a></li>
-            <li><a class="dropdown-item" href="{% url 'outcome_list' %}">Outcome</a></li>
-            <li><a class="dropdown-item" href="{% url 'transfer_list' %}">Transfer</a></li>
-            <li><a class="dropdown-item" href="{% url 'all_transactions' %}">All</a></li>
-          </ul>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'all_transactions' %}">Transactions</a>
         </li>
 
         <li class="nav-item">

@@ -168,8 +168,10 @@ def all_transactions(request):
         transactions = transactions.filter(category__type='Outcome')
     elif transaction_type == 'transfer':
         transactions = transactions.filter(category__type='Transfer_from')
+    else:
+        transaction_type = 'None'
 
-    paginator = Paginator(transactions, 5)
+    paginator = Paginator(transactions, 10)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
