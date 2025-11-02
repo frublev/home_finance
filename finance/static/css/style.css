@@ -117,19 +117,78 @@ form .form-control:focus {
 }
 
 .filter-link {
-  color: #198754; /* зелёный */
   text-decoration: none;
-  font-weight: 500;
-  padding: 4px 10px;
-  border-radius: 8px;
-  transition: all 0.2s ease;
-}
-
-.filter-link:hover {
-  background-color: #e8f5e9; /* светло-зелёный фон */
+  color: #555;         /* обычный цвет */
+  font-weight: normal;
+  padding: 0;           /* убираем отступы Bootstrap */
+  background: none !important; /* убираем фон */
+  border-radius: 0;     /* убираем скругления */
 }
 
 .filter-link.active {
-  background-color: #198754;
-  color: white !important;
+  color: #198754;       /* зеленый цвет активного */
+  font-weight: bold;     /* выделяем жирным */
+}
+
+.filter-link:hover {
+  color: #198754;       /* эффект наведения */
+}
+
+.type-filter-link {
+  text-decoration: none;
+  color: #555;
+  font-weight: normal;
+  background: none;
+  border: none;
+  padding: 0;
+}
+
+.type-filter-link.active {
+  color: #198754;
+  font-weight: bold;
+}
+
+.type-filter-link:hover {
+  color: #198754;
+}
+
+.filter-separator {
+  width: 1px;
+  height: 20px;
+  background-color: #ccc;
+  margin: 0 0.5rem;
+}
+
+/* Центрирование блока с пагинацией */
+.pagination-wrapper {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 20px;
+}
+
+/* Общий стиль для кнопок пагинации */
+.pagination-btn {
+    min-width: 100px;
+    text-align: center;
+}
+
+/* Кнопка NEXT — мягко зелёная, в стиле проекта */
+.btn-next-custom {
+    background-color: #4a954a;   /* твой зелёный */
+    color: white;
+    border: none;
+    border-radius: 0.5rem;
+    transition: background-color 0.2s ease;
+}
+
+.btn-next-custom:hover {
+    background-color: #3d7e3d; /* чуть темнее */
+}
+
+/* Optional: неактивные кнопки, если понадобятся */
+.btn-next-custom:disabled,
+.btn-outline-success:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
 }

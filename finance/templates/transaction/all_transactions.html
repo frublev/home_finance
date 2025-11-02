@@ -1,62 +1,137 @@
 {% extends 'base.html' %}
 {% load static %}
-{% block content %}
 
-<div class="filters mb-3 d-flex align-items-center flex-wrap" style="gap: 1.5rem;">
-  <!-- 🔹 Ссылки фильтров -->
-  <div class="d-flex align-items-center" style="gap: 1.5rem;">
-    <a href="?filter=today" class="filter-link {% if active_filter == 'today' %}active{% endif %}">Today</a>
-    <a href="?filter=week" class="filter-link {% if active_filter == 'week' %}active{% endif %}">Week</a>
-    <a href="?filter=month" class="filter-link {% if active_filter == 'month' %}active{% endif %}">Month</a>
-    <a href="?filter=period" class="filter-link {% if active_filter == 'period' %}active{% endif %}">Period</a>
+{% block content %}
+<div class="filters mb-3 d-flex flex-column" style="gap: 0.5rem;">
+    <!-- 🔹 Ссылки фильтров -->
+  <div class="d-flex align-items-center justify-content-between flex-wrap" style="gap: 1rem;">
+
+    <!-- Фильтры по времени -->
+    <div class="d-flex" style="gap: 1rem;">
+      <a href="?filter=today" class="filter-link {% if active_filter == 'today' %}active{% endif %}">Today</a>
+      <a href="?filter=week" class="filter-link {% if active_filter == 'week' %}active{% endif %}">Week</a>
+      <a href="?filter=month" class="filter-link {% if active_filter == 'month' %}active{% endif %}">Month</a>
+    </div>
+
+    <div class="filter-separator"></div>
+
+    <!-- Фильтры по типу -->
+    <div class="d-flex" style="gap: 1rem;">
+      <a href="?{% for key, value in request.GET.items %}{% if key != 'type' %}{{ key }}={{ value }}&{% endif %}{% endfor %}"
+        class="type-filter-link {% if active_type == 'None' %}active{% endif %}">All</a>
+      <a href="?{% for key, value in request.GET.items %}{% if key != 'type' %}{{ key }}={{ value }}&{% endif %}{% endfor %}type=income"
+        class="type-filter-link {% if active_type == 'income' %}active{% endif %}">Income</a>
+      <a href="?{% for key, value in request.GET.items %}{% if key != 'type' %}{{ key }}={{ value }}&{% endif %}{% endfor %}type=outcome"
+        class="type-filter-link {% if active_type == 'outcome' %}active{% endif %}">Outcome</a>
+      <a href="?{% for key, value in request.GET.items %}{% if key != 'type' %}{{ key }}={{ value }}&{% endif %}{% endfor %}type=transfer"
+        class="type-filter-link {% if active_type == 'transfer' %}active{% endif %}">Transfer</a>
+    </div>
   </div>
 
-  <!-- 🔹 Форма периода — теперь в той же строке -->
-  {% if active_filter == 'period' %}
-  <form method="get" class="d-flex align-items-center ms-3" style="gap: 0.5rem;">
-    <input type="hidden" name="filter" value="period">
-    <label for="from_date" class="form-label fw-semibold mb-0 small text-muted">From:</label>
-    <input type="date" id="from_date" name="from_date"
-           value="{{ from_date|date:'Y-m-d' }}"
-           class="form-control form-control-sm" style="width: auto;">
+    <!-- 🔹 Форма периода -->
+    <form method="get" action="" class="d-flex align-items-center" style="gap: 0.5rem; margin-top: 0.5rem;">
+        <input type="hidden" name="filter" value="{{ active_filter }}">
+        <label for="from_date" class="form-label fw-semibold mb-0 small text-muted">From:</label>
+        <input type="date" id="from_date" name="from_date" value="{{ from_date }}" class="form-control form-control-sm" style="width: auto;">
+        <label for="to_date" class="form-label fw-semibold mb-0 small text-muted">To:</label>
+        <input type="date" id="to_date" name="to_date" value="{{ to_date }}" class="form-control form-control-sm" style="width: auto;">
+        <input type="hidden" name="type" value="{{ active_type }}">
+        <button type="submit" class="btn btn-sm btn-success">Apply</button>
+    </form>
+</div>
 
-    <label for="to_date" class="form-label fw-semibold mb-0 small text-muted">To:</label>
-    <input type="date" id="to_date" name="to_date"
-           value="{{ to_date|date:'Y-m-d' }}"
-           class="form-control form-control-sm" style="width: auto;">
+<!-- 🔹 Таблица транзакций -->
+<table class="table table-hover align-middle">
+    <thead>
+        <tr>
+            <th>Date</th>
+            <th>Account</th>
+            <th>Category</th>
+            <th class="text-end">Amount</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for tx in transactions %}
+        <tr onclick="window.location='{% if tx.category.type in 'Income,Outcome' %}{% url 'edit_transaction' tx.id %}{% elif tx.category.type == 'Transfer_from' %}{% url 'edit_transfer' tx.transfer_id %}{% endif %}'">
+            <td>{{ tx.transaction_time|date:"Y-m-d H:i" }}</td>
+            <td>{{ tx.account.name }}</td>
+            <td>{{ tx.category.name }}</td>
+            <td class="text-end {% if tx.category.type == 'Income' %}text-success{% elif tx.category.type == 'Outcome' %}text-danger{% endif %}">
+                {% if tx.category.type == 'Income' %}+{% elif tx.category.type == 'Outcome' %}-{% endif %} {{ tx.amount }}
+            </td>
+        </tr>
+    {% empty %}
+        <tr>
+            <td colspan="4" class="text-center text-muted py-3">No transactions found</td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
 
-    <button type="submit" class="btn btn-sm btn-success">Apply</button>
-  </form>
+<!-- 🔹 Навигация по страницам -->
+<div class="pagination-wrapper">
+  {% if transactions.has_previous %}
+    <a class="btn btn-outline-success pagination-btn"
+       href="?page={{ transactions.previous_page_number }}&from_date={{ from_date }}&to_date={{ to_date }}&filter={{ active_filter }}{% if active_type %}&type={{ active_type }}{% endif %}">
+       Previous
+    </a>
+  {% endif %}
+
+  {% if transactions.has_next %}
+    <a class="btn btn-next-custom pagination-btn"
+       href="?page={{ transactions.next_page_number }}&from_date={{ from_date }}&to_date={{ to_date }}&filter={{ active_filter }}{% if active_type %}&type={{ active_type }}{% endif %}">
+       Next
+    </a>
   {% endif %}
 </div>
 
-  <!-- 🔹 Таблица транзакций -->
-  <table class="table table-hover align-middle">
-    <thead>
-      <tr>
-        <th>Date</th>
-        <th>Account</th>
-        <th>Category</th>
-        <th class="text-end">Amount</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for tx in transactions %}
-      <tr onclick="window.location='{% if tx.category.type in 'Income,Outcome' %}{% url 'edit_transaction' tx.id %}{% elif tx.category.type == 'Transfer_from' %}{% url 'edit_transfer' tx.transfer_id %}{% endif %}'">
-        <td>{{ tx.transaction_time|date:"Y-m-d H:i" }}</td>
-        <td>{{ tx.account.name }}</td>
-        <td>{{ tx.category.name }}</td>
-        <td class="text-end {% if tx.category.type == 'Income' %}text-success{% elif tx.category.type == 'Outcome' %}text-danger{% endif %}">
-          {% if tx.category.type == 'Income' %}+{% elif tx.category.type == 'Outcome' %}-{% endif %}
-          {{ tx.amount }}
-        </td>
-      </tr>
-      {% empty %}
-      <tr>
-        <td colspan="4" class="text-center text-muted py-3">No transactions found</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-</div>
+<script>
+function pad(n){ return n<10 ? '0'+n : n; }
+
+// Функция для получения даты "n" дней назад от today
+function getPastDate(today, daysAgo) {
+    return new Date(today.getFullYear(), today.getMonth(), today.getDate() - daysAgo);
+}
+
+// Функция для получения количества дней в предыдущем месяце
+function daysInPreviousMonth(today) {
+    let prevMonth = today.getMonth() - 1;
+    let prevYear = today.getFullYear();
+    if(prevMonth < 0){
+        prevMonth = 11; // декабрь
+        prevYear -= 1;
+    }
+    return new Date(prevYear, prevMonth + 1, 0).getDate();
+}
+
+// Основной обработчик клика
+document.querySelectorAll('.filter-link').forEach(link => {
+    link.addEventListener('click', function(e){
+        e.preventDefault();
+        const period = this.getAttribute('href').split('=')[1];
+        const today = new Date();
+        let fromDate;
+
+        switch(period){
+            case 'today': fromDate = today; break;
+            case 'week': fromDate = getPastDate(today, 6); break;
+            case 'month':
+                const daysPrevMonth = daysInPreviousMonth(today);
+                fromDate = getPastDate(today, daysPrevMonth - 1);
+                break;
+            default: return;
+        }
+
+        const f = fromDate.getFullYear() + '-' + pad(fromDate.getMonth()+1) + '-' + pad(fromDate.getDate());
+        const t = today.getFullYear() + '-' + pad(today.getMonth()+1) + '-' + pad(today.getDate());
+
+        const url = new URL(window.location.href);
+        url.searchParams.set('from_date', f);
+        url.searchParams.set('to_date', t);
+        url.searchParams.set('filter', period);
+        url.searchParams.delete('page'); // сброс страницы при смене фильтра
+        window.location.href = url.toString();
+    });
+});
+</script>
 {% endblock %}

@@ -1,13 +1,15 @@
 import uuid
 from decimal import Decimal
 
+from django.core.paginator import Paginator
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.utils import timezone
 from django.db import transaction as db_transaction
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
+import calendar
 from django.utils.timezone import now
 
 from .forms import AccountForm, CategoryForm, TransactionForm, TransferForm
@@ -121,42 +123,64 @@ def category_delete(request, category_id):
 
 @login_required
 def all_transactions(request):
-    filter_type = request.GET.get("filter", "month")
-    now = timezone.now()
-    from_date = None
-    to_date = None
+    filter_by = request.GET.get('filter', 'month')
+    from_date = request.GET.get('from_date')
+    to_date = request.GET.get('to_date')
 
-    if filter_type == "today":
-        from_date = now.replace(hour=0, minute=0, second=0)
-        to_date = now
-    elif filter_type == "week":
-        from_date = now - timedelta(days=7)
-        to_date = now
-    elif filter_type == "month":
-        from_date = now.replace(day=1, hour=0, minute=0, second=0)
-        to_date = now
-    elif filter_type == "period":
-        from_date_str = request.GET.get("from_date")
-        to_date_str = request.GET.get("to_date")
-        if from_date_str and to_date_str:
-            from_date = timezone.make_aware(datetime.strptime(from_date_str, "%Y-%m-%d"))
-            to_date = timezone.make_aware(datetime.strptime(to_date_str, "%Y-%m-%d"))
-        else:
-            from_date = now - timedelta(days=7)
-            to_date = now
+    today = date.today()
+
+    # Если даты не переданы, выставляем дефолт для фильтра
+    if not from_date or not to_date:
+        if filter_by == 'today':
+            from_date = today
+            to_date = today
+        elif filter_by == 'week':
+            from_date = today - timedelta(days=6)
+            to_date = today
+        elif filter_by == 'month':
+            # предыдущий месяц
+            prev_month = today.month - 1 or 12
+            prev_year = today.year if today.month != 1 else today.year - 1
+            days_in_prev_month = calendar.monthrange(prev_year, prev_month)[1]
+            from_date = today - timedelta(days=days_in_prev_month - 1)
+            to_date = today
+
+    if isinstance(from_date, date):
+        from_date_str = from_date.strftime('%Y-%m-%d')
+    else:
+        from_date_str = from_date or ''
+
+    if isinstance(to_date, date):
+        to_date_str = to_date.strftime('%Y-%m-%d')
+    else:
+        to_date_str = to_date or ''
 
     transactions = Transaction.objects.filter(
-        transaction_time__range=[from_date, to_date]
-    ).exclude(category__type="Transfer_to").order_by("-transaction_time")
+        transaction_time__date__gte=from_date if from_date else None,
+        transaction_time__date__lte=to_date if to_date else None
+    ).order_by('-transaction_time')
+
+    transaction_type = request.GET.get('type', None)
+
+    if transaction_type == 'income':
+        transactions = transactions.filter(category__type='Income')
+    elif transaction_type == 'outcome':
+        transactions = transactions.filter(category__type='Outcome')
+    elif transaction_type == 'transfer':
+        transactions = transactions.filter(category__type='Transfer_from')
+
+    paginator = Paginator(transactions, 5)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
 
     context = {
-        "transactions": transactions,
-        "active_filter": filter_type,
-        "from_date": from_date,
-        "to_date": to_date,
+        'transactions': page_obj,
+        'from_date': from_date_str,
+        'to_date': to_date_str,
+        'active_filter': filter_by,
+        'active_type': transaction_type,
     }
-    return render(request, "transaction/all_transactions.html", context)
-
+    return render(request, 'transaction/all_transactions.html', context)
 
 @login_required
 def income_list(request):
