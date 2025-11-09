@@ -33,6 +33,9 @@ DEBUG = os.getenv("DEBUG", "False").lower() in ("true", "1", "t", "yes")
 
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost').split(',')
 
+CSRF_TRUSTED_ORIGINS = [
+    "https://*.railway.app",
+]
 def get_local_ip():
     try:
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -99,18 +102,15 @@ WSGI_APPLICATION = 'config.wsgi.application'
 
 if DEBUG:
     DATABASES = {
-        "default": dj_database_url.parse(os.environ.get("DATABASE_URL"), conn_max_age=600)
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.getenv('DB_NAME'),
+            'USER': os.getenv('DB_USER'),
+            'PASSWORD': os.getenv('DB_PASSWORD'),
+            'HOST': os.getenv('DB_HOST', 'localhost'),
+            'PORT': os.getenv('DB_PORT', '5432'),
+        }
     }
-    # DATABASES = {
-    #     'default': {
-    #         'ENGINE': 'django.db.backends.postgresql',
-    #         'NAME': os.getenv('DB_NAME'),
-    #         'USER': os.getenv('DB_USER'),
-    #         'PASSWORD': os.getenv('DB_PASSWORD'),
-    #         'HOST': os.getenv('DB_HOST', 'localhost'),
-    #         'PORT': os.getenv('DB_PORT', '5432'),
-    #     }
-    # }
 else:
     DATABASES = {
         "default": dj_database_url.parse(os.environ.get("DATABASE_URL"), conn_max_age=600)
