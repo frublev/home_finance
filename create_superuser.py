@@ -2,7 +2,7 @@ import os
 import django
 
 # Указываем настройки проекта
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "finance.settings")  # или "config.settings" если settings там
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")  # или "config.settings" если settings там
 django.setup()
 
 from django.contrib.auth import get_user_model
