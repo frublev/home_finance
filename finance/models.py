@@ -23,6 +23,7 @@ class Account(models.Model):
     )  # Валюта счета
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, default=1)
     datetime = models.DateTimeField(auto_now_add=True)
+    iban = models.CharField(max_length=24, unique=True, null=True, blank=True)
 
     class Meta:
         ordering = ['name']  # <-- сортировка по алфавиту

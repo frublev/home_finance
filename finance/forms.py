@@ -6,9 +6,10 @@ from .models import Account, Category, Transaction
 class AccountForm(forms.ModelForm):
     class Meta:
         model = Account
-        fields = ['name', 'currency', 'balance']
+        fields = ['name', 'iban', 'currency', 'balance']
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control'}),
+            'iban': forms.TextInput(attrs={'class': 'form-control'}),
             'balance': forms.NumberInput(attrs={'class': 'form-control'}),
             'currency': forms.Select(attrs={'class': 'form-select'}),
         }

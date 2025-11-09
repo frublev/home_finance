@@ -1,14 +1,21 @@
 {% extends "base.html" %}
 {% block title %}Bank & Cash | f.rublev{% endblock %}
 
+{% load custom_filters %}
 {% block content %}
-<h2 class="mb-4">Bank & Cash</h2>
+
+<div class="total-balance-wrapper mb-3">
+    <div class="d-flex justify-content-between align-items-center p-3 rounded shadow-sm bg-light">
+        <span class="fw-semibold fs-5">Total Balance:</span>
+        <span class="fw-bold fs-4 text-success">{{ total_balance|intspace }} </span>
+    </div>
+</div>
 
 {% if accounts %}
     <table class="table table-hover align-middle">
         <thead>
             <tr>
-                <th>Name</th>
+                <th>Account / Wallet</th>
                 <th class="text-end">Balance</th>
             </tr>
         </thead>
@@ -16,9 +23,9 @@
         {% for account in accounts %}
             <tr>
                 <td>
-                    <a href="{% url 'account_detail' account.id %}">{{ account.name }} ({{ account.currency }})</a>
+                    <a href="{% url 'all_transactions' %}?account={{ account.id }}">{{ account.name }} ({{ account.currency }})</a>
                 </td>
-                <td class="text-end balance-cell">{{ account.balance|floatformat:2 }}</td>
+                <td class="text-end balance-cell">{{ account.balance|intspace }}</td>
             </tr>
         {% endfor %}
         </tbody>

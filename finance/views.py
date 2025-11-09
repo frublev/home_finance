@@ -2,6 +2,7 @@ import uuid
 from decimal import Decimal
 
 from django.core.paginator import Paginator
+from django.db.models import Q, Sum
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
@@ -18,7 +19,8 @@ from .models import Account, Category, Transaction
 
 @login_required
 def home(request):
-    return render(request, 'home.html')
+    return redirect('bank_and_cash')
+    # return render(request, 'home.html')
 
 @login_required
 def create_account(request):
@@ -37,7 +39,8 @@ def create_account(request):
 def bank_and_cash(request):
     # Показываем только счета текущего пользователя
     accounts = Account.objects.all()
-    return render(request, 'bank_and_cash.html', {'accounts': accounts})
+    total_balance = accounts.aggregate(total=Sum('balance'))['total'] or 0
+    return render(request, 'bank_and_cash.html', {'accounts': accounts, 'total_balance': total_balance})
 
 @login_required
 def account_detail(request, account_id):
@@ -160,14 +163,33 @@ def all_transactions(request):
         transaction_time__date__lte=to_date if to_date else None
     ).order_by('-transaction_time')
 
-    transaction_type = request.GET.get('type', None)
+    account = request.GET.get('account', None)
+    if account == 'None':
+        account = None
 
+    if account:
+        account=int(account)
+        transactions = transactions.filter(account=account)
+        template_name = 'transaction/account_transactions.html'
+    else:
+        template_name = 'transaction/all_transactions.html'
+
+    transaction_type = request.GET.get('type', None)
     if transaction_type == 'income':
-        transactions = transactions.filter(category__type='Income')
+        if account:
+            transactions = transactions.filter(Q(category__type='Income') | Q(category__type='Transfer_to'))
+        else:
+            transactions = transactions.filter(category__type='Income')
     elif transaction_type == 'outcome':
-        transactions = transactions.filter(category__type='Outcome')
+        if account:
+            transactions = transactions.filter(Q(category__type='Outcome') | Q(category__type='Transfer_from'))
+        else:
+            transactions = transactions.filter(category__type='Outcome')
     elif transaction_type == 'transfer':
-        transactions = transactions.filter(category__type='Transfer_from')
+        if account:
+            transactions = transactions.filter(Q(category__type='Transfer_from') | Q(category__type='Transfer_to'))
+        else:
+            transactions = transactions.filter(category__type='Transfer_from')
     else:
         transaction_type = 'None'
 
@@ -181,8 +203,10 @@ def all_transactions(request):
         'to_date': to_date_str,
         'active_filter': filter_by,
         'active_type': transaction_type,
+        'account': int(account) if account else None,
     }
-    return render(request, 'transaction/all_transactions.html', context)
+
+    return render(request, template_name, context)
 
 @login_required
 def income_list(request):
@@ -226,6 +250,8 @@ def add_transaction(request, tx_type):
     if tx_type not in ["Income", "Outcome"]:
         return redirect("home")
 
+    account_id = request.GET.get('account')
+
     if request.method == "POST":
         form = TransactionForm(request.POST, tx_type=tx_type)
         if form.is_valid():
@@ -242,7 +268,10 @@ def add_transaction(request, tx_type):
             tx.save()
             return redirect("income_list" if tx_type == "Income" else "outcome_list")
     else:
-        form = TransactionForm(tx_type=tx_type)
+        if account_id:
+            form = TransactionForm(tx_type=tx_type, initial={'account': account_id})
+        else:
+            form = TransactionForm(tx_type=tx_type)
 
     return render(request, "transaction/add_transaction.html", {
         "form": form,

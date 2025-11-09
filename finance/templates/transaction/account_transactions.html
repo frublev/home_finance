@@ -23,8 +23,6 @@
         class="type-filter-link {% if active_type == 'income' %}active{% endif %}">Income</a>
       <a href="?{% for key, value in request.GET.items %}{% if key != 'type' %}{{ key }}={{ value }}&{% endif %}{% endfor %}type=outcome"
         class="type-filter-link {% if active_type == 'outcome' %}active{% endif %}">Outcome</a>
-      <a href="?{% for key, value in request.GET.items %}{% if key != 'type' %}{{ key }}={{ value }}&{% endif %}{% endfor %}type=transfer"
-        class="type-filter-link {% if active_type == 'transfer' %}active{% endif %}">Transfer</a>
     </div>
   </div>
 
@@ -42,13 +40,36 @@
     </form>
 </div>
 
+<!-- 🔹 Кнопки действий -->
+<div class="d-flex" style="gap: 0.5rem; margin-bottom: 1.5rem;">
+    <!-- Добавить Income -->
+    <a href="{% url 'add_transaction' 'Income' %}{% if account %}?account={{ account }}{% endif %}"
+       class="btn btn-sm btn-outline-success">
+        Income
+    </a>
+    <!-- Добавить Outcome -->
+    <a href="{% url 'add_transaction' 'Outcome' %}{% if account %}?account={{ account }}{% endif %}"
+       class="btn btn-sm btn-outline-danger">
+        Outcome
+    </a>
+    <!-- Добавить Transfer -->
+    <a href="{% url 'add_transfer' %}{% if account %}?account={{ account }}{% endif %}"
+       class="btn btn-sm btn-outline-primary">
+        Transfer
+    </a>
+    <!-- Открыть Account Detail -->
+    <a href="{% if account %}{% url 'account_detail' account %}{% else %}#{% endif %}"
+       class="btn btn-sm btn-outline-secondary">
+        Account Details
+    </a>
+</div>
+
 <!-- 🔹 Таблица транзакций -->
 <table class="table table-hover align-middle">
     <thead>
         <tr>
             <th>Date</th>
-            <th>Account</th>
-            <th>Category</th>
+            <th>Description</th>
             <th class="text-end">Amount</th>
         </tr>
     </thead>
@@ -56,10 +77,9 @@
     {% for tx in transactions %}
         <tr onclick="window.location='{% if tx.category.type in 'Income,Outcome' %}{% url 'edit_transaction' tx.id %}{% elif tx.category.type == 'Transfer_from' %}{% url 'edit_transfer' tx.transfer_id %}{% endif %}'">
             <td>{{ tx.transaction_time|date:"Y-m-d H:i" }}</td>
-            <td>{{ tx.account.name }}</td>
-            <td>{{ tx.category.name }}</td>
-            <td class="text-end {% if tx.category.type == 'Income' %}text-success{% elif tx.category.type == 'Outcome' %}text-danger{% endif %}">
-                {% if tx.category.type == 'Income' %}+{% elif tx.category.type == 'Outcome' %}-{% endif %} {{ tx.amount }}
+            <td>{{ tx.description }}</td>
+            <td class="text-end {% if tx.category.type == 'Income' or tx.category.type == 'Transfer_to' %}text-success{% elif tx.category.type == 'Outcome' or tx.category.type == 'Transfer_from' %}text-danger{% endif %}">
+                {% if tx.category.type == 'Income' or tx.category.type == 'Transfer_to' %}+{% elif tx.category.type == 'Outcome' or tx.category.type == 'Transfer_from' %}-{% endif %} {{ tx.amount }}
             </td>
         </tr>
     {% empty %}
