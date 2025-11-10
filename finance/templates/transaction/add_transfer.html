@@ -44,8 +44,9 @@
     </div>
 
     <div class="d-flex gap-2">
+        <input type="hidden" name="next" value="{{ request.META.HTTP_REFERER }}">
         <button type="submit" class="btn btn-success">Save</button>
-        <a href="{% url 'transfer_list' %}" class="btn btn-secondary">Cancel</a>
+        <a href="javascript:history.back()" class="btn btn-outline-secondary">Cancel</a>
     </div>
 </form>
 {% endblock %}

@@ -186,10 +186,11 @@ def all_transactions(request):
         else:
             transactions = transactions.filter(category__type='Outcome')
     elif transaction_type == 'transfer':
-        if account:
-            transactions = transactions.filter(Q(category__type='Transfer_from') | Q(category__type='Transfer_to'))
-        else:
-            transactions = transactions.filter(category__type='Transfer_from')
+        transactions = transactions.filter(Q(category__type='Transfer_from') | Q(category__type='Transfer_to'))
+        # if account:
+        #     transactions = transactions.filter(Q(category__type='Transfer_from') | Q(category__type='Transfer_to'))
+        # else:
+        #     transactions = transactions.filter(category__type='Transfer_from')
     else:
         transaction_type = 'None'
 
@@ -266,7 +267,13 @@ def add_transaction(request, tx_type):
             tx.account.save()
 
             tx.save()
-            return redirect("income_list" if tx_type == "Income" else "outcome_list")
+
+            next_url = request.POST.get('next')
+            if next_url:
+                return redirect(next_url)
+            else:
+                return redirect("all_transactions")
+
     else:
         if account_id:
             form = TransactionForm(tx_type=tx_type, initial={'account': account_id})
@@ -280,6 +287,7 @@ def add_transaction(request, tx_type):
 
 @login_required
 def add_transfer(request):
+    account_id = request.GET.get('account')
     if request.method == "POST":
         form = TransferForm(request.POST)
         if form.is_valid():
@@ -319,9 +327,21 @@ def add_transfer(request):
                 to_acc.balance += amount
                 to_acc.save()
 
-            return redirect("transfer_list")
+            next_url = request.POST.get('next')
+            if next_url:
+                return redirect(next_url)
+            else:
+                return redirect("all_transactions")
+
+            # return redirect("transfer_list")
     else:
-        form = TransferForm()
+        if account_id:
+            form = TransferForm(initial={'from_account': account_id})
+        else:
+            form = TransferForm()
+
+    # else:
+    #     form = TransferForm()
 
     return render(request, "transaction/add_transfer.html", {"form": form})
 
@@ -383,13 +403,19 @@ def edit_transaction(request, pk):
                 # Наконец сохраняем транзакцию
                 new_tx.save()
 
-            # Редирект на соответствующий список (по типу новой/текущей категории)
-            if new_type and (new_type.lower() == "transfer" or new_type == "Transfer"):
-                return redirect("transfer_list")
-            elif new_type and (new_type.lower() == "income" or new_type == "Income"):
-                return redirect("income_list")
+            next_url = request.POST.get('next')
+            if next_url:
+                return redirect(next_url)
             else:
-                return redirect("outcome_list")
+                return redirect("all_transactions")
+
+            # # Редирект на соответствующий список (по типу новой/текущей категории)
+            # if new_type and (new_type.lower() == "transfer" or new_type == "Transfer"):
+            #     return redirect("transfer_list")
+            # elif new_type and (new_type.lower() == "income" or new_type == "Income"):
+            #     return redirect("income_list")
+            # else:
+            #     return redirect("outcome_list")
 
     else:
         form = TransactionForm(instance=tx)
@@ -459,7 +485,13 @@ def edit_transfer(request, transfer_id):
                 tx_to.transaction_time = new_time
                 tx_to.save(update_fields=["account", "amount", "category", "description", "transaction_time"])
 
-            return redirect("transfer_list")
+            next_url = request.POST.get('next')
+            if next_url:
+                return redirect(next_url)
+            else:
+                return redirect("all_transactions")
+
+            # return redirect("transfer_list")
 
     else:
         # Инициализация формы текущими значениями
@@ -502,11 +534,17 @@ def delete_transaction(request, pk):
             tx.account.save(update_fields=["balance"])
             tx.delete()
 
-        # Редирект на соответствующий список
-        if tx.category.type.lower() == "income":
-            return redirect("income_list")
+        next_url = request.POST.get('next')
+        if next_url:
+            return redirect(next_url)
         else:
-            return redirect("outcome_list")
+            return redirect("all_transactions")
+
+        # # Редирект на соответствующий список
+        # if tx.category.type.lower() == "income":
+        #     return redirect("income_list")
+        # else:
+        #     return redirect("outcome_list")
 
 
 @login_required
@@ -532,4 +570,10 @@ def delete_transfer(request, transfer_id):
             tx_from.delete()
             tx_to.delete()
 
-        return redirect("transfer_list")
+        next_url = request.POST.get('next')
+        if next_url:
+            return redirect(next_url)
+        else:
+            return redirect("all_transactions")
+
+        # return redirect("transfer_list")

@@ -54,12 +54,12 @@
     </thead>
     <tbody>
     {% for tx in transactions %}
-        <tr onclick="window.location='{% if tx.category.type in 'Income,Outcome' %}{% url 'edit_transaction' tx.id %}{% elif tx.category.type == 'Transfer_from' %}{% url 'edit_transfer' tx.transfer_id %}{% endif %}'">
+        <tr onclick="window.location='{% if tx.category.type in 'Income,Outcome' %}{% url 'edit_transaction' tx.id %}{% else %}{% url 'edit_transfer' tx.transfer_id %}{% endif %}'">
             <td>{{ tx.transaction_time|date:"Y-m-d H:i" }}</td>
             <td>{{ tx.account.name }}</td>
             <td>{{ tx.category.name }}</td>
-            <td class="text-end {% if tx.category.type == 'Income' %}text-success{% elif tx.category.type == 'Outcome' %}text-danger{% endif %}">
-                {% if tx.category.type == 'Income' %}+{% elif tx.category.type == 'Outcome' %}-{% endif %} {{ tx.amount }}
+            <td class="text-end {% if tx.category.type == 'Income' or tx.category.type == 'Transfer_to' %}text-success{% else %}text-danger{% endif %}">
+                {% if tx.category.type == 'Income' or tx.category.type == 'Transfer_to' %}+{% else %}-{% endif %} {{ tx.amount }}
             </td>
         </tr>
     {% empty %}

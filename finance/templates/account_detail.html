@@ -33,7 +33,7 @@
     </div>
 
     <button type="submit" class="btn btn-success">Save changes</button>
-    <a href="{% url 'account_delete' account.id %}" class="btn btn-danger">🗑 Delete</a>
-    <a href="{% url 'bank_and_cash' %}" class="btn btn-secondary">Back</a>
+    <a href="{% url 'account_delete' account.id %}" class="btn btn-danger">Delete</a>
+    <a href="javascript:history.back()" class="btn btn-outline-secondary">Cancel</a>
 </form>
 {% endblock %}

@@ -7,10 +7,10 @@
 
     <form method="post">
         {% csrf_token %}
+        <input type="hidden" name="next" value="{{ request.META.HTTP_REFERER }}">
         <div class="card shadow-sm p-4 mb-3">
             {{ form.as_p }}
         </div>
-
         <button type="submit" class="btn btn-success">Save changes</button>
         <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal">Delete</button>
         <a href="javascript:history.back()" class="btn btn-outline-secondary">Back</a>
@@ -34,6 +34,7 @@
 
         <form method="post" action="{% url 'delete_transaction' transaction.id %}">
             {% csrf_token %}
+            <input type="hidden" name="next" value="{{ request.META.HTTP_REFERER }}">
             <button type="submit" class="btn btn-danger">Yes, delete</button>
         </form>
       </div>
