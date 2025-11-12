@@ -198,3 +198,26 @@ form .form-control:focus {
     align-items: center;
     justify-content: center;
 }
+
+.account-title {
+    font-weight: 600;
+    font-size: 1rem;
+    color: #212529;
+    margin-bottom: 1rem;
+    border-left: 3px solid #198754; /* тонкий зелёный акцент */
+    padding-left: 0.6rem;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem; /* отступ между названием и балансом */
+}
+
+.account-balance {
+    font-weight: 700;
+    font-size: 1rem;
+}
+.text-success {
+    color: #198754 !important;
+}
+.text-danger {
+    color: #dc3545 !important;
+}

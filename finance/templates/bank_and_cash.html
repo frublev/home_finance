@@ -25,10 +25,8 @@
         </thead>
         <tbody>
         {% for account in accounts %}
-            <tr>
-                <td>
-                    <a href="{% url 'all_transactions' %}?account={{ account.id }}">{{ account.name }} ({{ account.currency }})</a>
-                </td>
+            <tr onclick="window.location='{% url 'all_transactions' %}?account={{ account.id }}'">
+                <td>{{ account.name }} ({{ account.currency }})</td>
                 <td class="text-end balance-cell">{{ account.balance|intspace }}</td>
             </tr>
         {% endfor %}

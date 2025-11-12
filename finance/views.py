@@ -129,6 +129,9 @@ def all_transactions(request):
     filter_by = request.GET.get('filter', 'month')
     from_date = request.GET.get('from_date')
     to_date = request.GET.get('to_date')
+    account_name = None
+    account_balance = None
+    account_currency_symbol = None
 
     today = date.today()
 
@@ -169,6 +172,11 @@ def all_transactions(request):
 
     if account:
         account=int(account)
+        account_name = Account.objects.filter(id=account).first()
+        if account_name:
+            account_balance = account_name.balance
+            account_currency_symbol = account_name.currency_symbol
+            account_name = account_name.name
         transactions = transactions.filter(account=account)
         template_name = 'transaction/account_transactions.html'
     else:
@@ -199,6 +207,10 @@ def all_transactions(request):
     page_obj = paginator.get_page(page_number)
 
     context = {
+        'today': date.today(),
+        'account_name': account_name,
+        'account_balance': account_balance,
+        'account_currency_symbol': account_currency_symbol,
         'transactions': page_obj,
         'from_date': from_date_str,
         'to_date': to_date_str,

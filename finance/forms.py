@@ -52,6 +52,16 @@ class TransactionForm(forms.ModelForm):
         for field in ["amount", "account", "category", "description"]:
             self.fields[field].widget.attrs.update({"class": "form-control"})
 
+        # Для поля amount — особая настройка, чтобы не показывало 0 на iPhone
+        self.fields["amount"].widget = forms.NumberInput(
+            attrs={
+                "class": "form-control",
+                "inputmode": "decimal",  # помогает iPhone не подставлять 0
+                "value": "",             # явно указываем пустое значение
+                "step": "any",
+                "placeholder": "",
+            }
+        )
 
 class TransferForm(forms.Form):
     from_account = forms.ModelChoiceField(
@@ -67,7 +77,15 @@ class TransferForm(forms.Form):
     amount = forms.DecimalField(
         max_digits=10,
         decimal_places=2,
-        widget=forms.NumberInput(attrs={"class": "form-control"})
+        widget=forms.NumberInput(
+            attrs={
+                "class": "form-control",
+                "inputmode": "decimal",  # чтобы на iPhone не появлялся 0
+                "value": "",             # пустое поле по умолчанию
+                "step": "any",
+                "placeholder": "",
+            }
+        )
     )
     # # category = forms.ModelChoiceField(
     # #     queryset=Category.objects.filter(type="Transfer_from"),

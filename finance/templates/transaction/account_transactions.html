@@ -1,34 +1,49 @@
 {% extends 'base.html' %}
 {% load static %}
 
+{% load custom_filters %}
 {% block content %}
-<div class="filters mb-3 d-flex flex-column" style="gap: 0.5rem;">
-    <!-- 🔹 Ссылки фильтров -->
-  <div class="d-flex align-items-center justify-content-between flex-wrap" style="gap: 1rem;">
 
-    <!-- Фильтры по времени -->
-    <div class="d-flex" style="gap: 1rem;">
-      <a href="?filter=today" class="filter-link {% if active_filter == 'today' %}active{% endif %}">Today</a>
-      <a href="?filter=week" class="filter-link {% if active_filter == 'week' %}active{% endif %}">Week</a>
-      <a href="?filter=month" class="filter-link {% if active_filter == 'month' %}active{% endif %}">Month</a>
+<h4 class="account-title">
+    {{ account_name }}
+    <span class="account-balance {% if account_balance < 0 %}text-danger{% else %}text-success{% endif %}">
+        {{ account_currency_symbol }} {{ account_balance|intspace }}
+    </span>
+</h4>
+
+<div class="filters-actions-wrapper mb-3 d-flex flex-wrap align-items-center justify-content-between" style="gap: 0.75rem;">
+    <!-- 🔹 Кнопки действий -->
+    <div class="d-flex flex-wrap" style="gap: 0.5rem;">
+        <a href="{% url 'add_transaction' 'Income' %}{% if account %}?account={{ account }}{% endif %}"
+           class="btn btn-sm btn-outline-success">Income</a>
+        <a href="{% url 'add_transaction' 'Outcome' %}{% if account %}?account={{ account }}{% endif %}"
+           class="btn btn-sm btn-outline-danger">Outcome</a>
+        <a href="{% url 'add_transfer' %}{% if account %}?account={{ account }}{% endif %}"
+           class="btn btn-sm btn-outline-primary">Transfer</a>
+        <a href="{% if account %}{% url 'account_detail' account %}{% else %}#{% endif %}"
+           class="btn btn-sm btn-outline-secondary">Details</a>
     </div>
+</div>
 
-<!--    <div class="filter-separator"></div>-->
-
-    <!-- Фильтры по типу -->
-    <div class="d-flex" style="gap: 1rem;">
-      <a href="?{% for key, value in request.GET.items %}{% if key != 'type' %}{{ key }}={{ value }}&{% endif %}{% endfor %}type=None"
-        class="type-filter-link {% if active_type == 'None' %}active{% endif %}">All</a>
-      <a href="?{% for key, value in request.GET.items %}{% if key != 'type' %}{{ key }}={{ value }}&{% endif %}{% endfor %}type=income"
-        class="type-filter-link {% if active_type == 'income' %}active{% endif %}">Income</a>
-      <a href="?{% for key, value in request.GET.items %}{% if key != 'type' %}{{ key }}={{ value }}&{% endif %}{% endfor %}type=outcome"
-        class="type-filter-link {% if active_type == 'outcome' %}active{% endif %}">Outcome</a>
+<div class="filters-actions-wrapper mb-3 d-flex flex-wrap align-items-center justify-content-between" style="gap: 0.75rem;">
+    <!-- 🔹 Фильтры по типу -->
+    <div class="d-flex flex-wrap" style="gap: 0.5rem;">
+        <a href="?{% for key, value in request.GET.items %}{% if key != 'type' %}{{ key }}={{ value }}&{% endif %}{% endfor %}type=None"
+           class="type-filter-link {% if active_type == 'None' %}active{% endif %}">All</a>
+        <a href="?{% for key, value in request.GET.items %}{% if key != 'type' %}{{ key }}={{ value }}&{% endif %}{% endfor %}type=income"
+           class="type-filter-link {% if active_type == 'income' %}active{% endif %}">Income</a>
+        <a href="?{% for key, value in request.GET.items %}{% if key != 'type' %}{{ key }}={{ value }}&{% endif %}{% endfor %}type=outcome"
+           class="type-filter-link {% if active_type == 'outcome' %}active{% endif %}">Outcome</a>
+        <span class="text-muted">|</span>
+        <!-- 🔹 Фильтры по времени -->
+        <a href="?filter=today" class="filter-link {% if active_filter == 'today' %}active{% endif %}">Today</a>
+        <a href="?filter=week" class="filter-link {% if active_filter == 'week' %}active{% endif %}">Week</a>
+        <a href="?filter=month" class="filter-link {% if active_filter == 'month' %}active{% endif %}">Month</a>
     </div>
-  </div>
 
     <!-- 🔹 Форма периода -->
-    <form method="get" action="" class="d-flex align-items-center" style="gap: 0.5rem; margin-top: 0.5rem;">
-        <input type="hidden" name="filter" value="{{ active_filter }}">
+    <form method="get" action="" class="d-flex flex-wrap align-items-center" style="gap: 0.25rem;">
+        <input type="hidden" name="filter" value="">
         <label for="from_date" class="form-label fw-semibold mb-0 small text-muted">From:</label>
         <input type="date" id="from_date" name="from_date" value="{{ from_date }}" class="form-control form-control-sm" style="width: auto;">
         <label for="to_date" class="form-label fw-semibold mb-0 small text-muted">To:</label>
@@ -36,32 +51,7 @@
         <input type="hidden" name="type" value="{{ active_type }}">
         <input type="hidden" name="account" value="{{ account }}">
         <button type="submit" class="btn btn-sm btn-success">Apply</button>
-
     </form>
-</div>
-
-<!-- 🔹 Кнопки действий -->
-<div class="d-flex" style="gap: 0.5rem; margin-bottom: 1.5rem;">
-    <!-- Добавить Income -->
-    <a href="{% url 'add_transaction' 'Income' %}{% if account %}?account={{ account }}{% endif %}"
-       class="btn btn-sm btn-outline-success">
-        Income
-    </a>
-    <!-- Добавить Outcome -->
-    <a href="{% url 'add_transaction' 'Outcome' %}{% if account %}?account={{ account }}{% endif %}"
-       class="btn btn-sm btn-outline-danger">
-        Outcome
-    </a>
-    <!-- Добавить Transfer -->
-    <a href="{% url 'add_transfer' %}{% if account %}?account={{ account }}{% endif %}"
-       class="btn btn-sm btn-outline-primary">
-        Transfer
-    </a>
-    <!-- Открыть Account Detail -->
-    <a href="{% if account %}{% url 'account_detail' account %}{% else %}#{% endif %}"
-       class="btn btn-sm btn-outline-secondary">
-        Account Details
-    </a>
 </div>
 
 <!-- 🔹 Таблица транзакций -->
@@ -76,10 +66,17 @@
     <tbody>
     {% for tx in transactions %}
         <tr onclick="window.location='{% if tx.category.type in 'Income,Outcome' %}{% url 'edit_transaction' tx.id %}{% else %}{% url 'edit_transfer' tx.transfer_id %}{% endif %}'">
-            <td>{{ tx.transaction_time|date:"Y-m-d H:i" }}</td>
+            <td style="white-space: nowrap;">
+                {% if tx.transaction_time.date == today %}
+                    {{ tx.transaction_time|date:"H:i" }}
+                {% else %}
+                    {{ tx.transaction_time|date:"d M" }}
+                {% endif %}
+            </td>
             <td>{{ tx.description }}</td>
-            <td class="text-end {% if tx.category.type == 'Income' or tx.category.type == 'Transfer_to' %}text-success{% elif tx.category.type == 'Outcome' or tx.category.type == 'Transfer_from' %}text-danger{% endif %}">
-                {% if tx.category.type == 'Income' or tx.category.type == 'Transfer_to' %}+{% elif tx.category.type == 'Outcome' or tx.category.type == 'Transfer_from' %}-{% endif %} {{ tx.amount }}
+            <td class="text-end {% if tx.category.type == 'Income' or tx.category.type == 'Transfer_to' %}text-success{% elif tx.category.type == 'Outcome' or tx.category.type == 'Transfer_from' %}text-danger{% endif %}"
+                style="white-space: nowrap;">
+                {% if tx.category.type == 'Income' or tx.category.type == 'Transfer_to' %}+{% elif tx.category.type == 'Outcome' or tx.category.type == 'Transfer_from' %}-{% endif %}{{ tx.amount }}
             </td>
         </tr>
     {% empty %}
@@ -107,53 +104,7 @@
   {% endif %}
 </div>
 
-<script>
-function pad(n){ return n<10 ? '0'+n : n; }
+<script src="{% static 'js/transactions_filters.js' %}"></script>
+<!--<script src="{% static 'js/word_cutting.js' %}"></script>-->
 
-// Функция для получения даты "n" дней назад от today
-function getPastDate(today, daysAgo) {
-    return new Date(today.getFullYear(), today.getMonth(), today.getDate() - daysAgo);
-}
-
-// Функция для получения количества дней в предыдущем месяце
-function daysInPreviousMonth(today) {
-    let prevMonth = today.getMonth() - 1;
-    let prevYear = today.getFullYear();
-    if(prevMonth < 0){
-        prevMonth = 11; // декабрь
-        prevYear -= 1;
-    }
-    return new Date(prevYear, prevMonth + 1, 0).getDate();
-}
-
-// Основной обработчик клика
-document.querySelectorAll('.filter-link').forEach(link => {
-    link.addEventListener('click', function(e){
-        e.preventDefault();
-        const period = this.getAttribute('href').split('=')[1];
-        const today = new Date();
-        let fromDate;
-
-        switch(period){
-            case 'today': fromDate = today; break;
-            case 'week': fromDate = getPastDate(today, 6); break;
-            case 'month':
-                const daysPrevMonth = daysInPreviousMonth(today);
-                fromDate = getPastDate(today, daysPrevMonth - 1);
-                break;
-            default: return;
-        }
-
-        const f = fromDate.getFullYear() + '-' + pad(fromDate.getMonth()+1) + '-' + pad(fromDate.getDate());
-        const t = today.getFullYear() + '-' + pad(today.getMonth()+1) + '-' + pad(today.getDate());
-
-        const url = new URL(window.location.href);
-        url.searchParams.set('from_date', f);
-        url.searchParams.set('to_date', t);
-        url.searchParams.set('filter', period);
-        url.searchParams.delete('page'); // сброс страницы при смене фильтра
-        window.location.href = url.toString();
-    });
-});
-</script>
 {% endblock %}
