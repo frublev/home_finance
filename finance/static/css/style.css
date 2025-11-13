@@ -148,6 +148,19 @@ form .form-control:focus {
   font-weight: bold;
 }
 
+
+/* 🔹 Активный Outcome — красный */
+.type-filter-link.active[href*="type=outcome"],
+.type-filter-link.active[data-type="outcome"] {
+    color: #dc3545 !important; /* красный Bootstrap */
+}
+
+/* 🔹 Активный All — тёмно-серый */
+.type-filter-link.active[href*="type=None"],
+.type-filter-link.active[data-type="None"] {
+    color: #495057 !important;
+}
+
 .type-filter-link:hover {
   color: #198754;
 }
@@ -204,11 +217,23 @@ form .form-control:focus {
     font-size: 1rem;
     color: #212529;
     margin-bottom: 1rem;
-    border-left: 3px solid #198754; /* тонкий зелёный акцент */
     padding-left: 0.6rem;
-    display: flex;
+    display: inline-flex;
+    gap: 0.5rem;
     align-items: center;
-    gap: 0.6rem; /* отступ между названием и балансом */
+    border-left: 3px solid; /* без цвета */
+}
+
+.account-title.negative {
+    border-left-color: #dc3545 !important; /* красная палочка */
+}
+
+.account-title.positive {
+    border-left-color: #198754; /* зелёная палочка */
+}
+
+.account-balance {
+    font-weight: 600;
 }
 
 .account-balance {
@@ -221,3 +246,4 @@ form .form-control:focus {
 .text-danger {
     color: #dc3545 !important;
 }
+

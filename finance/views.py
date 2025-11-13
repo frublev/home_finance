@@ -202,6 +202,42 @@ def all_transactions(request):
     else:
         transaction_type = 'None'
 
+    # 🔹 Расчёт итогов за период
+    # (переводы учитываются только если указан счёт)
+    if account:
+        income_total = Transaction.objects.filter(
+            transaction_time__date__gte=from_date,
+            transaction_time__date__lte=to_date,
+            account=account,
+            category__type__in=['Income', 'Transfer_to']
+        ).aggregate(total=Sum('amount'))['total'] or 0
+
+        outcome_total = Transaction.objects.filter(
+            transaction_time__date__gte=from_date,
+            transaction_time__date__lte=to_date,
+            account=account,
+            category__type__in=['Outcome', 'Transfer_from']
+        ).aggregate(total=Sum('amount'))['total'] or 0
+    else:
+        income_total = Transaction.objects.filter(
+            transaction_time__date__gte=from_date,
+            transaction_time__date__lte=to_date,
+            category__type='Income'
+        ).aggregate(total=Sum('amount'))['total'] or 0
+
+        outcome_total = Transaction.objects.filter(
+            transaction_time__date__gte=from_date,
+            transaction_time__date__lte=to_date,
+            category__type='Outcome'
+        ).aggregate(total=Sum('amount'))['total'] or 0
+
+    balance_period = income_total - outcome_total
+
+    if transaction_type == 'income':
+        balance_period = income_total
+    if transaction_type == 'outcome':
+        balance_period = -outcome_total
+
     paginator = Paginator(transactions, 10)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
@@ -217,6 +253,9 @@ def all_transactions(request):
         'active_filter': filter_by,
         'active_type': transaction_type,
         'account': int(account) if account else None,
+        'income_total': income_total,
+        'outcome_total': outcome_total,
+        'balance_period': balance_period,
     }
 
     return render(request, template_name, context)
