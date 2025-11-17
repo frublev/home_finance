@@ -2,7 +2,8 @@ import uuid
 from decimal import Decimal
 
 from django.core.paginator import Paginator
-from django.db.models import Q, Sum
+from django.db.models import Q, Sum, OuterRef, Subquery, DecimalField, Value
+from django.db.models.functions import Coalesce
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
@@ -88,10 +89,134 @@ def create_category(request):
         form = CategoryForm()
     return render(request, 'create_category.html', {'form': form})
 
+
 @login_required
 def category(request):
-    categories = Category.objects.all()
-    return render(request, 'category.html', {'categories': categories})
+    today = timezone.now().date()
+    current_year = today.year
+    current_month = today.month
+    current_quarter = (today.month - 1) // 3 + 1
+    current_half = 1 if today.month <= 6 else 2
+
+    # --- тип транзакции: income | outcome (по умолчанию outcome)
+    active_type = request.GET.get("type", "outcome").capitalize()
+
+    # --- выбранный фильтр ---
+    active_filter = request.GET.get("filter", "month")
+
+    # --- выбранные параметры ---
+    selected_year = int(request.GET.get("year") or current_year)
+    selected_month = int(request.GET.get("month") or current_month)
+    selected_quarter = int(request.GET.get("quarter") or current_quarter)
+    selected_half = int(request.GET.get("half") or current_half)
+
+    # --- списки для селектов ---
+    months = [{"num": i, "name": date(2000, i, 1).strftime("%B")} for i in range(1, 13)]
+
+    quarters = [
+        {"num": 1, "name": "Jan–Mar", "start": 1, "end": 3},
+        {"num": 2, "name": "Apr–Jun", "start": 4, "end": 6},
+        {"num": 3, "name": "Jul–Sep", "start": 7, "end": 9},
+        {"num": 4, "name": "Oct–Dec", "start": 10, "end": 12},
+    ]
+
+    halves = [
+        {"num": 1, "name": "Jan–Jun", "start": 1, "end": 6},
+        {"num": 2, "name": "Jul–Dec", "start": 7, "end": 12},
+    ]
+
+    years = list(range(current_year, current_year - 8, -1))
+
+    # --- Вычисление периода ---
+    if active_filter == "month":
+        start_date = date(selected_year, selected_month, 1)
+        end_date = (
+            date(selected_year, selected_month + 1, 1) - timedelta(days=1)
+            if selected_month < 12 else
+            date(selected_year, 12, 31)
+        )
+
+    elif active_filter == "quarter":
+        q = quarters[selected_quarter - 1]
+        start_date = date(selected_year, q["start"], 1)
+        end_date = (
+            date(selected_year, q["end"] + 1, 1) - timedelta(days=1)
+            if q["end"] < 12 else
+            date(selected_year, 12, 31)
+        )
+
+    elif active_filter == "half":
+        h = halves[selected_half - 1]
+        start_date = date(selected_year, h["start"], 1)
+        end_date = (
+            date(selected_year, h["end"] + 1, 1) - timedelta(days=1)
+            if h["end"] < 12 else
+            date(selected_year, 12, 31)
+        )
+
+    elif active_filter == "year":
+        start_date = date(selected_year, 1, 1)
+        end_date = date(selected_year, 12, 31)
+
+    else:
+        # custom
+        fd = request.GET.get("from_date")
+        td = request.GET.get("to_date")
+        try:
+            start_date = datetime.strptime(fd, "%Y-%m-%d").date()
+        except:
+            start_date = today
+        try:
+            end_date = datetime.strptime(td, "%Y-%m-%d").date()
+        except:
+            end_date = today
+
+    # --- Subquery: сумма транзакций по категории и типу ---
+    tx_sub = (
+        Transaction.objects
+        .filter(
+            category=OuterRef("pk"),
+            category__type=active_type,   # <<< фильтрация по типу
+            transaction_time__date__gte=start_date,
+            transaction_time__date__lte=end_date
+        )
+        .values("category")
+        .annotate(total=Sum("amount"))
+        .values("total")
+    )
+
+    categories = (
+        Category.objects
+        .filter(type=active_type)  # <<< категории по типу
+        .annotate(
+            period_sum=Coalesce(
+                Subquery(tx_sub, output_field=DecimalField(max_digits=12, decimal_places=2)),
+                Value(0),
+                output_field=DecimalField(max_digits=12, decimal_places=2)
+            )
+        )
+        .order_by("name")
+    )
+
+    return render(request, "category.html", {
+        "categories": categories,
+
+        "active_type": active_type,
+        "active_filter": active_filter,
+
+        "months": months,
+        "quarters": quarters,
+        "halves": halves,
+        "years": years,
+
+        "selected_month": selected_month,
+        "selected_quarter": selected_quarter,
+        "selected_half": selected_half,
+        "selected_year": selected_year,
+
+        "start_date": start_date,
+        "end_date": end_date,
+    })
 
 @login_required
 def category_detail(request, category_id):

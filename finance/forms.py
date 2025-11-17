@@ -35,7 +35,12 @@ class TransactionForm(forms.ModelForm):
                 "type": "datetime-local",
                 "class": "form-control"
             }
-        )
+        ),
+        input_formats=[
+            "%Y-%m-%dT%H:%M",  # 👈 формат iPhone Safari
+            "%Y-%m-%d %H:%M:%S",  # стандарт Django
+            "%Y-%m-%d %H:%M",  # fallback
+        ]
     )
 
     class Meta:

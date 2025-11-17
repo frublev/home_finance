@@ -1,31 +1,166 @@
 {% extends "base.html" %}
+{% load static %}
 {% block title %}Category | f.rublev{% endblock %}
 
 {% block content %}
 <h2 class="mb-4">Category</h2>
 
+<div class="filters-actions-wrapper mb-3">
+
+    <!-- 🔹 ROW 1: TYPE + TIME FILTERS -->
+    <div class="d-flex flex-wrap align-items-center" style="gap: 0.5rem;">
+
+        <a href="?type=income&filter={{ active_filter }}{% if selected_month %}&month={{ selected_month }}{% endif %}{% if selected_quarter %}&quarter={{ selected_quarter }}{% endif %}{% if selected_half %}&half={{ selected_half }}{% endif %}{% if selected_year %}&year={{ selected_year }}{% endif %}"
+           class="type-filter-link {% if active_type == 'Income' %}active{% endif %}">
+            Income
+        </a>
+
+        <a href="?type=outcome&filter={{ active_filter }}{% if selected_month %}&month={{ selected_month }}{% endif %}{% if selected_quarter %}&quarter={{ selected_quarter }}{% endif %}{% if selected_half %}&half={{ selected_half }}{% endif %}{% if selected_year %}&year={{ selected_year }}{% endif %}"
+           class="type-filter-link {% if active_type == 'Outcome' %}active{% endif %}">
+            Outcome
+        </a>
+
+        <span class="text-muted">|</span>
+
+        <!-- TIME FILTERS -->
+        <a href="?filter=month&type={{ active_type }}"
+           class="filter-link {% if active_filter == 'month' %}active{% endif %}">
+            Month
+        </a>
+
+        <a href="?filter=quarter&type={{ active_type }}"
+           class="filter-link {% if active_filter == 'quarter' %}active{% endif %}">
+            Quarter
+        </a>
+
+        <a href="?filter=half&type={{ active_type }}"
+           class="filter-link {% if active_filter == 'half' %}active{% endif %}">
+            Half
+        </a>
+
+        <a href="?filter=year&type={{ active_type }}"
+           class="filter-link {% if active_filter == 'year' %}active{% endif %}">
+            Year
+        </a>
+    </div>
+
+
+    <!-- 🔹 ROW 2: PERIOD FORM -->
+    <div class="mt-2">
+        <form method="get" action="" class="d-flex flex-wrap align-items-center" style="gap: 0.35rem;">
+
+            <input type="hidden" name="type" value="{{ active_type }}">
+            <input type="hidden" name="filter" value="{{ active_filter }}">
+
+            {% if active_filter == "month" %}
+                <label class="form-label fw-semibold mb-0 small text-muted">Month</label>
+                <select name="month" class="form-select form-select-sm" style="width: auto;">
+                    {% for m in months %}
+                        <option value="{{ m.num }}" {% if m.num == selected_month %}selected{% endif %}>
+                            {{ m.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+
+                <label class="form-label fw-semibold mb-0 small text-muted">Year</label>
+                <select name="year" class="form-select form-select-sm" style="width: auto;">
+                    {% for y in years %}
+                        <option value="{{ y }}" {% if y == selected_year %}selected{% endif %}>
+                            {{ y }}
+                        </option>
+                    {% endfor %}
+                </select>
+
+            {% elif active_filter == "quarter" %}
+                <label class="form-label fw-semibold mb-0 small text-muted">Quarter</label>
+                <select name="quarter" class="form-select form-select-sm" style="width: auto;">
+                    {% for q in quarters %}
+                        <option value="{{ q.num }}" {% if q.num == selected_quarter %}selected{% endif %}>
+                            {{ q.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+
+                <label class="form-label fw-semibold mb-0 small text-muted">Year</label>
+                <select name="year" class="form-select form-select-sm" style="width: auto;">
+                    {% for y in years %}
+                        <option value="{{ y }}" {% if y == selected_year %}selected{% endif %}>
+                            {{ y }}
+                        </option>
+                    {% endfor %}
+                </select>
+
+            {% elif active_filter == "half" %}
+                <label class="form-label fw-semibold mb-0 small text-muted">Half:</label>
+                <select name="half" class="form-select form-select-sm" style="width: auto;">
+                    {% for h in halves %}
+                        <option value="{{ h.num }}" {% if h.num == selected_half %}selected{% endif %}>
+                            {{ h.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+
+                <label class="form-label fw-semibold mb-0 small text-muted">Year:</label>
+                <select name="year" class="form-select form-select-sm" style="width: auto;">
+                    {% for y in years %}
+                        <option value="{{ y }}" {% if y == selected_year %}selected{% endif %}>
+                            {{ y }}
+                        </option>
+                    {% endfor %}
+                </select>
+
+            {% elif active_filter == "year" %}
+                <label class="form-label fw-semibold mb-0 small text-muted">Year:</label>
+                <select name="year" class="form-select form-select-sm" style="width: auto;">
+                    {% for y in years %}
+                        <option value="{{ y }}" {% if y == selected_year %}selected{% endif %}>
+                            {{ y }}
+                        </option>
+                    {% endfor %}
+                </select>
+            {% endif %}
+
+            <button type="submit" class="btn btn-sm btn-success">
+                Apply
+            </button>
+
+        </form>
+    </div>
+
+</div>
+<!-- 🔹 CATEGORY TABLE -->
 {% if categories %}
     <table class="table table-hover align-middle">
         <thead>
             <tr>
                 <th>Name</th>
-                <th>Amount</th>
+                <th class="text-end">Amount</th>
             </tr>
         </thead>
         <tbody>
-        {% for category in categories %}
-            <tr>
-                <td><a href="{% url 'category_detail' category.id %}">{{ category.name }}</td>
-                <td>{{ category.type }}</td>
-            </tr>
-        {% endfor %}
+            {% for category in categories %}
+                <tr>
+                    <td>
+                        <a href="{% url 'category_detail' category.id %}"
+                            class="{% if category.type == 'Income' %}text-success{% elif category.type == 'Outcome' %}text-danger{% endif %}">
+                                {{ category.name }}
+                        </a>
+                    </td>
+                    <td class="text-end">
+                        {{ category.period_sum|floatformat:2 }}
+                    </td>
+                </tr>
+            {% endfor %}
         </tbody>
     </table>
 {% else %}
-    <p>No category yet.</p>
+    <p>No categories yet.</p>
 {% endif %}
 
 <div class="mt-4">
     <a href="{% url 'create_category' %}" class="btn btn-success">+ Create Category</a>
 </div>
+
+<script src="{% static 'js/filter_cutting.js' %}"></script>
+
 {% endblock %}
