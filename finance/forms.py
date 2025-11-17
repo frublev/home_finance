@@ -74,6 +74,7 @@ class TransactionForm(forms.ModelForm):
             }
         )
 
+
 class TransferForm(forms.Form):
     from_account = forms.ModelChoiceField(
         queryset=Account.objects.all(),
