@@ -29,18 +29,22 @@ class CategoryForm(forms.ModelForm):
 class TransactionForm(forms.ModelForm):
     transaction_time = forms.DateTimeField(
         label="Transaction time",
-        initial=timezone.now,
+        # формат для показа в виджете (HTML5 datetime-local)
         widget=forms.DateTimeInput(
             attrs={
                 "type": "datetime-local",
-                "class": "form-control"
-            }
+                "class": "form-control",
+            },
+            format="%Y-%m-%dT%H:%M",  # важный формат для отображения
         ),
+        # форматы, которые форма принимает при submit (iPhone/Safari и Django)
         input_formats=[
-            "%Y-%m-%dT%H:%M",  # 👈 формат iPhone Safari
-            "%Y-%m-%d %H:%M:%S",  # стандарт Django
-            "%Y-%m-%d %H:%M",  # fallback
-        ]
+            "%Y-%m-%dT%H:%M",        # HTML5 datetime-local (Chrome, modern browsers)
+            "%Y-%m-%dT%H:%M:%S",     # sometimes with seconds
+            "%Y-%m-%d %H:%M:%S",     # Django default string representation
+            "%Y-%m-%d %H:%M",        # fallback
+        ],
+        initial=timezone.now
     )
 
     class Meta:
@@ -51,18 +55,20 @@ class TransactionForm(forms.ModelForm):
         tx_type = kwargs.pop("tx_type", None)
         super().__init__(*args, **kwargs)
 
+        # Filter categories by type if provided
         if tx_type:
             self.fields["category"].queryset = Category.objects.filter(type=tx_type)
 
+        # Apply bootstrap class
         for field in ["amount", "account", "category", "description"]:
             self.fields[field].widget.attrs.update({"class": "form-control"})
 
-        # Для поля amount — особая настройка, чтобы не показывало 0 на iPhone
+        # Special tweak for amount on iPhone
         self.fields["amount"].widget = forms.NumberInput(
             attrs={
                 "class": "form-control",
-                "inputmode": "decimal",  # помогает iPhone не подставлять 0
-                "value": "",             # явно указываем пустое значение
+                "inputmode": "decimal",
+                "value": "",
                 "step": "any",
                 "placeholder": "",
             }
