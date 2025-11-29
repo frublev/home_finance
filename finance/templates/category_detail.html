@@ -30,6 +30,6 @@
 
     <button type="submit" class="btn btn-success">Save changes</button>
     <a href="{% url 'category_delete' category.id %}" class="btn btn-danger">Delete</a>
-    <a href="{% url 'category' %}" class="btn btn-secondary">Back</a>
+    <a href="javascript:history.back()" class="btn btn-outline-secondary">Back</a>
 </form>
 {% endblock %}

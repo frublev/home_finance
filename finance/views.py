@@ -1,6 +1,7 @@
 import uuid
 from decimal import Decimal
 
+from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.db.models import Q, Sum, OuterRef, Subquery, DecimalField, Value
 from django.db.models.functions import Coalesce
@@ -102,11 +103,11 @@ def category(request):
     active_type = request.GET.get("type", "outcome").capitalize()
 
     # --- выбранный фильтр ---
-    active_filter = request.GET.get("filter", "month")
+    active_filter = request.GET.get("filter", "this_month")
 
     # --- выбранные параметры ---
     selected_year = int(request.GET.get("year") or current_year)
-    selected_month = int(request.GET.get("month") or current_month)
+    selected_month = int(request.GET.get("this_month") or current_month)
     selected_quarter = int(request.GET.get("quarter") or current_quarter)
     selected_half = int(request.GET.get("half") or current_half)
 
@@ -128,7 +129,14 @@ def category(request):
     years = list(range(current_year, current_year - 8, -1))
 
     # --- Вычисление периода ---
-    if active_filter == "month":
+    fd = request.GET.get("start_date")
+    td = request.GET.get("end_date")
+
+    if fd and td:
+        start_date = fd
+        end_date = td
+
+    elif active_filter == "this_month":
         start_date = date(selected_year, selected_month, 1)
         end_date = (
             date(selected_year, selected_month + 1, 1) - timedelta(days=1)
@@ -159,17 +167,69 @@ def category(request):
         end_date = date(selected_year, 12, 31)
 
     else:
-        # custom
-        fd = request.GET.get("from_date")
-        td = request.GET.get("to_date")
+        start_date = today
+        end_date = today
+
+    try:
+        start_date = start_date.strftime('%Y-%m-%d')
+        end_date = end_date.strftime('%Y-%m-%d')
+    except:
+        pass
+
+    selected_category_id = request.GET.get("category_id")
+
+    # output_field для Value(0) — чтобы Coalesce не мешался с DecimalField
+    dec_field = DecimalField(max_digits=12, decimal_places=2)
+    zero_dec = Value(0, output_field=dec_field)
+
+    if selected_category_id:
+        template_name = "transaction/category_transaction.html"
         try:
-            start_date = datetime.strptime(fd, "%Y-%m-%d").date()
-        except:
-            start_date = today
-        try:
-            end_date = datetime.strptime(td, "%Y-%m-%d").date()
-        except:
-            end_date = today
+            selected_category = Category.objects.get(pk=selected_category_id, type=active_type)
+
+            # --- транзакции выбранной категории ---
+            category_transactions = Transaction.objects.filter(
+                category=selected_category,
+                category__type=active_type,
+                transaction_time__date__gte=start_date,
+                transaction_time__date__lte=end_date
+            ).order_by("-transaction_time")
+
+            # --- сумма по выбранной категории ---
+            amount_to_title = (
+                category_transactions.aggregate(
+                    total=Coalesce(
+                        Sum("amount"),
+                        Value(0, output_field=DecimalField(max_digits=12, decimal_places=2)),
+                        output_field=DecimalField(max_digits=12, decimal_places=2),
+                    )
+                )["total"]
+            )
+
+        except Category.DoesNotExist:
+            selected_category = None
+            category_transactions = None
+            amount_to_title = zero_dec
+
+    else:
+        # --- сумма по типу и периоду ---
+        template_name = "category.html"
+        amount_to_title = (
+            Transaction.objects.filter(
+                category__type=active_type,
+                transaction_time__date__gte=start_date,
+                transaction_time__date__lte=end_date
+            ).aggregate(
+                total=Coalesce(
+                    Sum("amount"),
+                    Value(0, output_field=DecimalField(max_digits=12, decimal_places=2)),
+                    output_field=DecimalField(max_digits=12, decimal_places=2),
+                )
+            )["total"]
+        )
+
+        category_transactions = None
+        selected_category = None
 
     # --- Subquery: сумма транзакций по категории и типу ---
     tx_sub = (
@@ -198,12 +258,27 @@ def category(request):
         .order_by("name")
     )
 
-    return render(request, "category.html", {
+    # Пагинация: только если есть QuerySet
+    page_obj = None
+    if category_transactions is not None:
+        paginator = Paginator(category_transactions, 10)
+        page_number = request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
+
+    categories_for_filter = Category.objects.filter(type=active_type)
+
+    return render(request, template_name, {
+        "amount_to_title": amount_to_title,
         "categories": categories,
+        "categories_for_filter": categories_for_filter,
+        "category_transactions": page_obj,
+        "selected_category": selected_category,
+        "category_id": int(selected_category_id) if selected_category_id else None,
 
         "active_type": active_type,
         "active_filter": active_filter,
 
+        "today": date.today(),
         "months": months,
         "quarters": quarters,
         "halves": halves,

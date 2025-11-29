@@ -74,35 +74,34 @@ class TransactionForm(forms.ModelForm):
             }
         )
 
+
 class TransferForm(forms.Form):
     from_account = forms.ModelChoiceField(
         queryset=Account.objects.all(),
         label="From account",
         widget=forms.Select(attrs={"class": "form-control"})
     )
+
     to_account = forms.ModelChoiceField(
         queryset=Account.objects.all(),
         label="To account",
         widget=forms.Select(attrs={"class": "form-control"})
     )
+
     amount = forms.DecimalField(
         max_digits=10,
         decimal_places=2,
         widget=forms.NumberInput(
             attrs={
                 "class": "form-control",
-                "inputmode": "decimal",  # чтобы на iPhone не появлялся 0
-                "value": "",             # пустое поле по умолчанию
+                "inputmode": "decimal",
+                "value": "",
                 "step": "any",
                 "placeholder": "",
             }
         )
     )
-    # # category = forms.ModelChoiceField(
-    # #     queryset=Category.objects.filter(type="Transfer_from"),
-    # #     label="Category",
-    # #     widget=forms.Select(attrs={"class": "form-control"})
-    # )
+
     description = forms.CharField(
         required=False,
         widget=forms.Textarea(attrs={"class": "form-control", "rows": 3})
@@ -111,7 +110,19 @@ class TransferForm(forms.Form):
     transaction_time = forms.DateTimeField(
         label="Transaction time",
         initial=timezone.now,
-        widget=forms.DateTimeInput(attrs={"type": "datetime-local", "class": "form-control"})
+        widget=forms.DateTimeInput(
+            attrs={
+                "type": "datetime-local",
+                "class": "form-control",
+            },
+            format="%Y-%m-%dT%H:%M"  # нужный формат для корректного отображения
+        ),
+        input_formats=[
+            "%Y-%m-%dT%H:%M",        # основной формат HTML5
+            "%Y-%m-%dT%H:%M:%S",     # иногда Safari добавляет секунды
+            "%Y-%m-%d %H:%M:%S",     # Django стандарт
+            "%Y-%m-%d %H:%M",        # fallback
+        ],
     )
 
     def clean(self):
@@ -121,4 +132,6 @@ class TransferForm(forms.Form):
 
         if from_acc == to_acc:
             raise forms.ValidationError("Source and destination accounts cannot be the same.")
+
         return cleaned_data
+    

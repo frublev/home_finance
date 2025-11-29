@@ -4,10 +4,32 @@
 {% load custom_filters %}
 {% block content %}
 <h4 class="account-title {% if active_type == 'Outcome' %}negative{% else %}positive{% endif %}">
-    {{ active_type }}
+    <form method="get" class="d-inline">
+        {# Сохраняем тип фильтра #}
+        <input type="hidden" name="type" value="{{ active_type }}">
+
+        {# Сохраняем фильтры дат #}
+        {% if active_filter %}
+            <input type="hidden" name="filter" value="{{ active_filter }}">
+        {% endif %}
+        <select name="category_id" class="form-select d-inline w-auto" onchange="this.form.submit()">
+            {% for cat in categories_for_filter %}
+                <option value="{{ cat.id }}"
+                        {% if selected_category and cat.id == selected_category.id %}selected{% endif %}>
+                    {{ cat.name }}
+                </option>
+            {% endfor %}
+        </select>
+    </form>
     <span class="account-balance {% if active_type == 'Outcome' %}text-danger{% else %}text-success{% endif %}">
         € {{ amount_to_title|intspace }}
     </span>
+    {% if selected_category %}
+        <a href="{% url 'category_detail' selected_category.id %}"
+           class="btn btn-sm btn-outline-secondary ms-2">
+            Details
+        </a>
+    {% endif %}
 </h4>
 
 <div class="filters-actions-wrapper mb-3">
@@ -28,22 +50,22 @@
         <span class="text-muted">|</span>
 
         <!-- TIME FILTERS -->
-        <a href="?filter=this_month&type={{ active_type }}"
+        <a href="?filter=this_month&type={{ active_type }}&category_id={{ category_id }}"
            class="filter-link {% if active_filter == 'this_month' %}active{% endif %}">
             Month
         </a>
 
-        <a href="?filter=quarter&type={{ active_type }}"
+        <a href="?filter=quarter&type={{ active_type }}&category_id={{ category_id }}"
            class="filter-link {% if active_filter == 'quarter' %}active{% endif %}">
             Quarter
         </a>
 
-        <a href="?filter=half&type={{ active_type }}"
+        <a href="?filter=half&type={{ active_type }}&category_id={{ category_id }}"
            class="filter-link {% if active_filter == 'half' %}active{% endif %}">
             Half
         </a>
 
-        <a href="?filter=year&type={{ active_type }}"
+        <a href="?filter=year&type={{ active_type }}&category_id={{ category_id }}"
            class="filter-link {% if active_filter == 'year' %}active{% endif %}">
             Year
         </a>
@@ -56,6 +78,7 @@
 
             <input type="hidden" name="type" value="{{ active_type }}">
             <input type="hidden" name="filter" value="{{ active_filter }}">
+            <input type="hidden" name="category_id" value="{{ category_id }}">
 
             {% if active_filter == "this_month" %}
                 <label class="form-label fw-semibold mb-0 small text-muted">Month</label>
@@ -130,39 +153,57 @@
             </button>
         </form>
     </div>
-
 </div>
 <!-- 🔹 CATEGORY TABLE -->
-{% if categories %}
+{% if category_transactions %}
     <table class="table table-hover align-middle">
         <thead>
             <tr>
-                <th>Name</th>
+                <th>Date</th>
+                <th>Account</th>
                 <th class="text-end">Amount</th>
             </tr>
         </thead>
         <tbody>
-            {% for category in categories %}
-                <tr>
-                    <td>
-                        <a href="{% url 'category' %}?type={{ active_type }}&category_id={{ category.id }}&start_date={{ start_date }}&end_date={{ end_date }}"
-                            class="{% if category.type == 'Income' %}text-success{% elif category.type == 'Outcome' %}text-danger{% endif %}">
-                                {{ category.name }}
-                        </a>
+            {% for tx in category_transactions %}
+                <tr onclick="window.location='{% if active_type in 'Income,Outcome' %}{% url 'edit_transaction' tx.id %}{% endif %}'">
+                    <td style="white-space: nowrap;">
+                        {% if tx.transaction_time.date == today %}
+                            {{ tx.transaction_time|date:"H:i" }}
+                        {% else %}
+                            {{ tx.transaction_time|date:"d M" }}
+                        {% endif %}
                     </td>
-                    <td class="text-end">
-                        {{ category.period_sum|floatformat:2 }}
+                    <td>
+                        {{ tx.account.name }}
+                    </td>
+                    <td class="text-end {% if active_type == 'Income' %}text-success{% elif active_type == 'Outcome' %}text-danger{% endif %}"
+                        style="white-space: nowrap;">
+                        {{ tx.amount }}
                     </td>
                 </tr>
             {% endfor %}
         </tbody>
     </table>
 {% else %}
-    <p>No categories yet.</p>
+    <p>No transaction in this period.</p>
 {% endif %}
 
-<div class="mt-4">
-    <a href="{% url 'create_category' %}" class="btn btn-success">+ Create Category</a>
+<!-- 🔹 Навигация по страницам -->
+<div class="pagination-wrapper">
+  {% if category_transactions.has_previous %}
+    <a class="btn btn-outline-success pagination-btn"
+       href="?page={{ category_transactions.previous_page_number }}&filter={{ active_filter }}&type={{ active_type }}&category_id={{ category_id }}&start_date={{ start_date }}&end_date={{ end_date }}">
+       Previous
+    </a>
+  {% endif %}
+
+  {% if category_transactions.has_next %}
+    <a class="btn btn-next-custom pagination-btn"
+       href="?page={{ category_transactions.next_page_number }}&filter={{ active_filter }}&type={{ active_type }}&category_id={{ category_id }}&start_date={{ start_date }}&end_date={{ end_date }}">
+       Next
+    </a>
+  {% endif %}
 </div>
 
 <script src="{% static 'js/filter_cutting.js' %}"></script>
