@@ -670,6 +670,8 @@ def edit_transaction(request, pk):
 
     else:
         form = TransactionForm(instance=tx)
+        if tx.category:
+            form.fields['category'].queryset = Category.objects.filter(type=tx.category.type)
 
     return render(request, "transaction/edit_transaction.html", {"form": form, "transaction": tx})
 
