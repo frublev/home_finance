@@ -255,7 +255,7 @@ def category(request):
                 output_field=DecimalField(max_digits=12, decimal_places=2)
             )
         )
-        .order_by("name")
+        .order_by("-period_sum", "name")
     )
 
     # Пагинация: только если есть QuerySet
