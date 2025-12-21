@@ -44,25 +44,76 @@ def bank_and_cash(request):
     total_balance = accounts.aggregate(total=Sum('balance'))['total'] or 0
     return render(request, 'bank_and_cash.html', {'accounts': accounts, 'total_balance': total_balance})
 
+# @login_required
+# def account_detail(request, account_id):
+#     # Получаем счет или 404
+#     account = get_object_or_404(Account, id=account_id)
+#
+#     if request.method == 'POST':
+#         form = AccountForm(request.POST, instance=account)
+#         print(request.POST)
+#         if form.is_valid():
+#             form.save()
+#             return redirect('bank_and_cash')  # после сохранения возвращаем на список счетов
+#         else:
+#             print(form.errors)
+#     else:
+#         form = AccountForm(instance=account)
+#
+#     return render(request, 'account_detail.html', {
+#         'form': form,
+#         'account': account
+#     })
+
 @login_required
 def account_detail(request, account_id):
-    # Получаем счет или 404
     account = get_object_or_404(Account, id=account_id)
 
-    if request.method == 'POST':
+    old_balance = Decimal(account.balance)
+
+    if request.method == "POST":
         form = AccountForm(request.POST, instance=account)
-        print(request.POST)
+
         if form.is_valid():
-            form.save()
-            return redirect('bank_and_cash')  # после сохранения возвращаем на список счетов
-        else:
-            print(form.errors)
+            with db_transaction.atomic():
+                account = form.save(commit=False)
+                new_balance = Decimal(account.balance)
+
+                delta = new_balance - old_balance
+
+                # сохраняем счёт с новым балансом
+                account.save()
+
+                if delta != 0:
+                    if delta > 0:
+                        category_ = Category.objects.get(
+                            name="Correct+",
+                            type="Income"
+                        )
+                        amount = delta
+                    else:
+                        category_ = Category.objects.get(
+                            name="Correct-",
+                            type="Outcome"
+                        )
+                        amount = abs(delta)
+
+                    Transaction.objects.create(
+                        account=account,
+                        category=category_,
+                        amount=amount,
+                        transaction_time=timezone.now(),
+                        description="Manual balance correction"
+                    )
+
+            return redirect('bank_and_cash')
+
     else:
         form = AccountForm(instance=account)
 
-    return render(request, 'account_detail.html', {
-        'form': form,
-        'account': account
+    return render(request, "account_detail.html", {
+        "form": form,
+        "account": account,
     })
 
 @login_required
