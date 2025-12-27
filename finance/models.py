@@ -43,6 +43,12 @@ class Account(models.Model):
         }
         return symbols.get(self.currency, self.currency)
 
+class CategoryTag(models.Model):
+    name = models.CharField(max_length=50, unique=True)
+
+    def __str__(self):
+        return self.name
+
 class Category(models.Model):
     TYPE_CHOICES = [
         ('Income', 'Income'),
@@ -60,6 +66,12 @@ class Category(models.Model):
         default='Outcome'
     )
     datetime = models.DateTimeField(auto_now_add=True)
+
+    tags = models.ManyToManyField(
+        CategoryTag,
+        blank=True,
+        related_name='categories'
+    )
 
     def __str__(self):
         return self.name
@@ -82,6 +94,12 @@ class Transaction(models.Model):
         null=True,
         blank=True,
         related_name="entered_transactions"
+    )
+
+    tags = models.ManyToManyField(
+        CategoryTag,
+        blank=True,
+        related_name="transactions"
     )
 
     def __str__(self):

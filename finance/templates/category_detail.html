@@ -32,4 +32,42 @@
     <a href="{% url 'category_delete' category.id %}" class="btn btn-danger">Delete</a>
     <a href="javascript:history.back()" class="btn btn-outline-secondary">Back</a>
 </form>
+
+<hr class="my-4">
+
+<!-- 🔹 Теги категории -->
+<div class="mb-3">
+    <label class="form-label">Tags</label>
+
+    <!-- Список тегов -->
+    <div class="d-flex flex-wrap gap-1 mb-2">
+        {% for tag in category.tags.all %}
+            <form method="post"
+                  action="{% url 'remove_category_tag' category.id tag.id %}"
+                  style="display:inline;">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{{ request.path }}">
+                <button type="submit" class="badge bg-secondary me-1 border-0" style="cursor:pointer;">
+                    {{ tag.name }} ×
+                </button>
+            </form>
+        {% empty %}
+            <span class="text-muted">No tags yet</span>
+        {% endfor %}
+    </div>
+
+    <!-- Добавление нового тега -->
+    <form method="post" action="{% url 'add_category_tag' category.id %}" class="d-flex gap-2">
+        {% csrf_token %}
+        <input
+            type="text"
+            name="tag_name"
+            class="form-control"
+            placeholder="Add tag..."
+            required
+        >
+        <input type="hidden" name="next" value="{{ request.path }}">
+        <button type="submit" class="btn btn-success">Add</button>
+    </form>
+</div>
 {% endblock %}

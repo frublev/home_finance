@@ -14,9 +14,10 @@ from django.db import transaction as db_transaction
 from datetime import datetime, timedelta, date
 import calendar
 from django.utils.timezone import now
+from django.views.decorators.http import require_POST
 
 from .forms import AccountForm, CategoryForm, TransactionForm, TransferForm
-from .models import Account, Category, Transaction
+from .models import Account, Category, Transaction, CategoryTag
 
 
 @login_required
@@ -365,6 +366,37 @@ def category_detail(request, category_id):
     })
 
 @login_required
+@require_POST
+def add_category_tag(request, category_id):
+    category_ = get_object_or_404(Category, id=category_id)
+
+    tag_name = request.POST.get("tag_name", "").strip()
+    if tag_name:
+        tag, _ = CategoryTag.objects.get_or_create(name=tag_name)
+        category_.tags.add(tag)
+
+    next_url = request.POST.get("next")
+    if next_url:
+        return redirect(next_url)
+    else:
+        return redirect("category_detail", category_id=category_.id)
+
+
+@login_required
+@require_POST
+def remove_category_tag(request, category_id, tag_id):
+    category_ = get_object_or_404(Category, id=category_id)
+    tag = get_object_or_404(CategoryTag, id=tag_id)
+
+    category_.tags.remove(tag)
+
+    next_url = request.POST.get("next")
+    if next_url:
+        return redirect(next_url)
+
+    return redirect("category_detail", category_id=category_.id)
+
+@login_required
 def category_delete(request, category_id):
     category_ = get_object_or_404(Category, id=category_id)
 
@@ -705,6 +737,17 @@ def edit_transaction(request, pk):
                 # Наконец сохраняем транзакцию
                 new_tx.save()
 
+                # ✅ СОХРАНЕНИЕ ТЕГОВ
+                tag_names_str = request.POST.get("transaction_tags", "")
+                if tag_names_str:
+                    tag_names_list = tag_names_str.split(',')
+                    new_tx.tags.set(CategoryTag.objects.filter(name__in=tag_names_list))
+                    # tag_names = [name.strip() for name in tag_names_str.split(",") if name.strip()]
+                    # tags_to_add = CategoryTag.objects.filter(name__in=tag_names)
+                    # new_tx.tags.add(*tags_to_add)
+                else:
+                    new_tx.tags.clear()
+
             next_url = request.POST.get('next')
             if next_url:
                 return redirect(next_url)
@@ -723,7 +766,7 @@ def edit_transaction(request, pk):
         form = TransactionForm(instance=tx)
         if tx.category:
             form.fields['category'].queryset = Category.objects.filter(type=tx.category.type)
-
+    print('safeq', tx.tags.all())
     return render(request, "transaction/edit_transaction.html", {"form": form, "transaction": tx})
 
 
