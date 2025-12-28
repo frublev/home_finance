@@ -5,6 +5,7 @@ from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.db.models import Q, Sum, OuterRef, Subquery, DecimalField, Value
 from django.db.models.functions import Coalesce
+from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
@@ -397,6 +398,17 @@ def remove_category_tag(request, category_id, tag_id):
     return redirect("category_detail", category_id=category_.id)
 
 @login_required
+def category_tags(request, category_id):
+    category_ = get_object_or_404(Category, id=category_id)
+
+    return JsonResponse({
+        "tags": [
+            {"id": tag.id, "name": tag.name}
+            for tag in category_.tags.all()
+        ]
+    })
+
+@login_required
 def category_delete(request, category_id):
     category_ = get_object_or_404(Category, id=category_id)
 
@@ -602,6 +614,11 @@ def add_transaction(request, tx_type):
 
             tx.save()
 
+            tag_names_str = request.POST.get("transaction_tags", "")
+            if tag_names_str:
+                tag_names_list = tag_names_str.split(',')
+                tx.tags.set(CategoryTag.objects.filter(name__in=tag_names_list))
+
             next_url = request.POST.get('next')
             if next_url:
                 return redirect(next_url)
@@ -614,9 +631,12 @@ def add_transaction(request, tx_type):
         else:
             form = TransactionForm(tx_type=tx_type)
 
+    category_tags = CategoryTag.objects.all()
+
     return render(request, "transaction/add_transaction.html", {
         "form": form,
         "tx_type": tx_type,
+        "category_tags": category_tags
     })
 
 @login_required

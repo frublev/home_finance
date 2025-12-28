@@ -1,56 +1,3 @@
-{% extends "base.html" %}
-{% load static %}
-{% block title %}Add {{ tx_type }} | f.rublev{% endblock %}
-
-{% block content %}
-<h2 class="mb-4">Add {{ tx_type }}</h2>
-
-<form method="post" class="card p-4 shadow-sm">
-    {% csrf_token %}
-
-    <div class="mb-3">
-        {{ form.amount.label_tag }}
-        {{ form.amount }}
-    </div>
-
-    <div class="mb-3">
-        {{ form.account.label_tag }}
-        {{ form.account }}
-    </div>
-
-    <div class="mb-3">
-        {{ form.category.label_tag }}
-        {{ form.category }}
-    </div>
-
-    <div class="mb-3">
-        {{ form.transaction_time.label_tag }}
-        {{ form.transaction_time }}
-    </div>
-
-    <div class="mb-3">
-        {{ form.description.label_tag }}
-        {{ form.description }}
-    </div>
-
-    <!-- 🔹 ТЕГИ -->
-    <div class="mb-3" id="tags-container" style="display:none;">
-        <label class="form-label">Tags</label>
-
-        <div class="d-flex flex-wrap gap-1" id="tags-list"></div>
-
-        <input name="transaction_tags" id="transaction_tags_input">
-    </div>
-
-    <div class="d-flex gap-2 mt-3">
-        <input type="hidden" name="next" value="{{ request.META.HTTP_REFERER }}">
-        <button type="submit" class="btn btn-success">Save</button>
-        <a href="javascript:history.back()" class="btn btn-outline-secondary">Cancel</a>
-    </div>
-</form>
-
-<script src="{% static 'js/add_tags.js' %}"></script>
-<script>
 document.addEventListener("DOMContentLoaded", function () {
     const categorySelect = document.getElementById("id_category");
     const tagsContainer = document.getElementById("tags-container");
@@ -116,7 +63,25 @@ document.addEventListener("DOMContentLoaded", function () {
                 tagsInput.value = "";
             });
     });
-});
-</script>
 
-{% endblock %}
+    const initialCategoryId = categorySelect.value;
+    const initialTags = tagsInput.value ? tagsInput.value.split(",") : [];
+
+    if (initialCategoryId) {
+        fetch(`/categories/${initialCategoryId}/tags/`)
+            .then(res => res.json())
+            .then(data => {
+                renderTags(data.tags);
+
+                // подсветка уже выбранных тегов
+                document.querySelectorAll(".tag-item").forEach(el => {
+                    if (initialTags.includes(el.dataset.tag)) {
+                        el.classList.remove("bg-secondary");
+                        el.classList.add("bg-primary");
+                    }
+                });
+                tagsContainer.style.display = "block";
+            });
+    }
+});
+
