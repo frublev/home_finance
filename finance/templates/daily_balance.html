@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block content %}
+
+<h4 class="account-title {% if account_balance < 0 %}negative{% else %}positive{% endif %}">
+    {{ account_name }}
+    <span class="account-balance {% if account_balance < 0 %}text-danger{% else %}text-success{% endif %}">
+        {{ account_currency_symbol }} {{ account_balance|intspace }}
+    </span>
+</h4>
+
+<div class="filters-actions-wrapper mb-3 d-flex flex-wrap align-items-center" style="gap: 0.75rem;">
+    <!-- 🔹 Фильтры по времени -->
+    <a href="?filter=month" class="filter-link {% if active_filter == 'month' %}active{% endif %}">Month</a>
+    <a href="?filter=quarter" class="filter-link {% if active_filter == 'today' %}active{% endif %}">Quarter</a>
+    <a href="?filter=half" class="filter-link {% if active_filter == 'week' %}active{% endif %}">HalfYear</a>
+    <a href="?filter=year" class="filter-link {% if active_filter == 'week' %}active{% endif %}">Year</a>
+
+    <span class="text-muted">|</span>
+    <!-- 🔹 Форма периода -->
+    <form method="get" action="" class="d-flex flex-wrap align-items-center" style="gap: 0.25rem;">
+        <input type="hidden" name="filter" value="">
+        <label for="from_date" class="form-label fw-semibold mb-0 small text-muted">From:</label>
+        <input type="date" id="from_date" name="from_date" value="{{ from_date }}" class="form-control form-control-sm" style="width: auto;">
+        <label for="to_date" class="form-label fw-semibold mb-0 small text-muted">To:</label>
+        <input type="date" id="to_date" name="to_date" value="{{ to_date }}" class="form-control form-control-sm" style="width: auto;">
+        <input type="hidden" name="account" value="{{ account }}">
+        <button type="submit" class="btn btn-sm btn-success">Apply</button>
+    </form>
+</div>
+
+<div style="height: 300px;">
+    <canvas id="balanceChart" data-balances='{{ balances|json_script:"balances-data" }}'>
+    </canvas>
+</div>
+
+<!-- 🔹 Ссылка для таблицы -->
+<a href="#"
+   class="ms-2 text-secondary text-decoration-none small"
+   data-bs-toggle="collapse"
+   data-bs-target="#balancesTable"
+   aria-expanded="false">
+    Show table
+</a>
+
+<!-- 🔹 ТАБЛИЦА (скрыта по умолчанию) -->
+<div class="collapse mt-3" id="balancesTable">
+    <table class="table table-hover align-middle">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th class="text-end">Balance</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for day in balances %}
+            <tr>
+                <td>{{ day.date }}</td>
+                <td class="text-end">{{ day.balance|intspace }}</td>
+            </tr>
+        {% empty %}
+            <tr>
+                <td colspan="2" class="text-center text-muted py-3">
+                    No data for selected period
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const balancesData = [
+        {% for day in balances %}
+            {
+                date: "{{ day.date }}",
+                balance: {{ day.balance }}
+            },
+        {% endfor %}
+    ];
+</script>
+<!--<script>-->
+<!--    const toggleLink = document.querySelector('[data-bs-target="#balancesTable"]');-->
+<!--    const tableBlock = document.getElementById('balancesTable');-->
+
+<!--    tableBlock.addEventListener('show.bs.collapse', () => {-->
+<!--        toggleLink.textContent = 'Hide table';-->
+<!--    });-->
+
+<!--    tableBlock.addEventListener('hide.bs.collapse', () => {-->
+<!--        toggleLink.textContent = 'Show table';-->
+<!--    });-->
+<!--</script>-->
+<script src="{% static 'js/balance_chart.js' %}"></script>
+<script src="{% static 'js/transactions_filters.js' %}"></script>
+
+{% endblock %}

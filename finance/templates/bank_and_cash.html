@@ -7,7 +7,7 @@
 <div class="container px-0">
   <div class="total-balance-wrapper mb-3">
       <table class="table table-borderless align-middle mb-0 shadow-sm rounded" style="background-color: #f8f9fa;">
-          <tr>
+          <tr onclick="window.location='{% url 'all_transactions' %}'">
               <th class="fw-semibold fs-5">Total Balance:</th>
               <th class="text-end fw-bold fs-4 text-success">€ {{ total_balance|intspace }}</th>
           </tr>

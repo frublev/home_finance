@@ -1,5 +1,9 @@
 function pad(n){ return n<10 ? '0'+n : n; }
 
+function isLastDayOfMonth(date) {
+    return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate() === date.getDate();
+}
+
 function getPastDate(today, daysAgo) {
     return new Date(today.getFullYear(), today.getMonth(), today.getDate() - daysAgo);
 }
@@ -7,6 +11,86 @@ function getPastDate(today, daysAgo) {
 // Получение первого дня текущего месяца (для this_month)
 function firstDayOfThisMonth(today) {
     return new Date(today.getFullYear(), today.getMonth(), 1);
+}
+
+function isLastDayOfQuarter(date) {
+    const endMonth = Math.floor(date.getMonth() / 3) * 3 + 2;
+    const lastDay = new Date(date.getFullYear(), endMonth + 1, 0);
+    return date.toDateString() === lastDay.toDateString();
+}
+
+function isLastDayOfHalf(date) {
+    const endMonth = date.getMonth() < 6 ? 5 : 11;
+    const lastDay = new Date(date.getFullYear(), endMonth + 1, 0);
+    return date.toDateString() === lastDay.toDateString();
+}
+
+function isLastDayOfYear(date) {
+    return date.getMonth() === 11 && date.getDate() === 31;
+}
+
+function fullMonthFromDate(today) {
+    // если сегодня последний день месяца — берём текущий месяц целиком
+    if (isLastDayOfMonth(today)) {
+        return new Date(today.getFullYear(), today.getMonth(), 1);
+    }
+
+    // иначе: соответствующая дата прошлого месяца + 1 день
+    const prevMonthSameDay = new Date(
+        today.getFullYear(),
+        today.getMonth() - 1,
+        today.getDate()
+    );
+
+    prevMonthSameDay.setDate(prevMonthSameDay.getDate() + 1);
+    return prevMonthSameDay;
+}
+
+function fullQuarterFromDate(today) {
+    if (isLastDayOfQuarter(today)) {
+        const qStartMonth = Math.floor(today.getMonth() / 3) * 3;
+        return new Date(today.getFullYear(), qStartMonth, 1);
+    }
+
+    const prevQuarterSameDay = new Date(
+        today.getFullYear(),
+        today.getMonth() - 3,
+        today.getDate()
+    );
+
+    prevQuarterSameDay.setDate(prevQuarterSameDay.getDate() + 1);
+    return prevQuarterSameDay;
+}
+
+function fullHalfFromDate(today) {
+    if (isLastDayOfHalf(today)) {
+        const startMonth = today.getMonth() < 6 ? 0 : 6;
+        return new Date(today.getFullYear(), startMonth, 1);
+    }
+
+    const prevHalfSameDay = new Date(
+        today.getFullYear(),
+        today.getMonth() - 6,
+        today.getDate()
+    );
+
+    prevHalfSameDay.setDate(prevHalfSameDay.getDate() + 1);
+    return prevHalfSameDay;
+}
+
+function fullYearFromDate(today) {
+    if (isLastDayOfYear(today)) {
+        return new Date(today.getFullYear(), 0, 1);
+    }
+
+    const prevYearSameDay = new Date(
+        today.getFullYear() - 1,
+        today.getMonth(),
+        today.getDate()
+    );
+
+    prevYearSameDay.setDate(prevYearSameDay.getDate() + 1);
+    return prevYearSameDay;
 }
 
 // Получение даты начала квартала
@@ -44,20 +128,28 @@ document.querySelectorAll('.filter-link').forEach(link => {
                 break;
             case 'month':
                 // обычный month (для совместимости)
-                const daysPrevMonth = today.getDate() - 1;
-                fromDate = getPastDate(today, daysPrevMonth);
+                fromDate = fullMonthFromDate(today);
+                break;
+            case 'quarter':
+                fromDate = fullQuarterFromDate(today)
+                break;
+            case 'half':
+                fromDate = fullHalfFromDate(today)
+                break;
+            case 'year':
+                fromDate = fullYearFromDate(today)
                 break;
             case 'this_month':
                 // новый период для категорий
                 fromDate = firstDayOfThisMonth(today);
                 break;
-            case 'quarter':
+            case 'this_quarter':
                 fromDate = firstDayOfQuarter(today);
                 break;
-            case 'half':
+            case 'this_half':
                 fromDate = firstDayOfHalf(today);
                 break;
-            case 'year':
+            case 'this_year':
                 fromDate = firstDayOfYear(today);
                 break;
             default:

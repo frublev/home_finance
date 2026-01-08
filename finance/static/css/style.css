@@ -286,3 +286,16 @@ form .form-control:focus {
         width: 40%;
     }
 }
+
+.chart-wrapper {
+    height: 320px;
+    background: red !important;
+    }        /* desktop */
+
+@media (max-width: 992px) {
+    .chart-wrapper { height: 280px; }    /* tablet */
+}
+
+@media (max-width: 576px) {
+    .chart-wrapper { height: 240px; }    /* phone */
+}

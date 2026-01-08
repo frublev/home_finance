@@ -108,3 +108,18 @@ class Transaction(models.Model):
     @property
     def type(self):
         return self.category.type if self.category else None
+
+class DailyBalance(models.Model):
+    account = models.ForeignKey(Account, on_delete=models.CASCADE)
+    date = models.DateField()
+    balance = models.DecimalField(max_digits=12, decimal_places=2)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ("account", "date")
+        indexes = [
+            models.Index(fields=["account", "date"]),
+        ]
+
+    def __str__(self):
+        return f"{self.account} balance on {self.date}: {self.balance}"

@@ -18,6 +18,10 @@
     {% endif %}
     <span class="account-balance {% if balance_period < 0 %}text-danger{% else %}text-success{% endif %}">
         €{{ balance_period|intspace }}
+        <a href="{% url 'account_balance_period' '1' %}{% if active_filter %}?filter={{ active_filter }}{% else %}?filter={% endif %}{% if from_date %}&from_date={{ from_date }}{% endif %}{% if to_date %}&to_date={{ to_date }}{% endif %}"
+            class="ms-2 text-secondary text-decoration-none small"
+            title="Daily balance">Dynamic
+        </a>
     </span>
 </h4>
 

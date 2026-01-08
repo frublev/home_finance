@@ -6,9 +6,16 @@
 
 <h4 class="account-title {% if account_balance < 0 %}negative{% else %}positive{% endif %}">
     {{ account_name }}
+<!--    <span class="account-balance {% if account_balance < 0 %}text-danger{% else %}text-success{% endif %}">-->
+<!--        {{ account_currency_symbol }} {{ account_balance|intspace }}-->
+<!--    </span>-->
     <span class="account-balance {% if account_balance < 0 %}text-danger{% else %}text-success{% endif %}">
-        {{ account_currency_symbol }} {{ account_balance|intspace }}
-    </span>
+    {{ account_currency_symbol }} {{ account_balance|intspace }}
+    <a href="{% url 'account_balance_period' account %}{% if active_filter %}?filter={{ active_filter }}{% else %}?filter={% endif %}{% if from_date %}&from_date={{ from_date }}{% endif %}{% if to_date %}&to_date={{ to_date }}{% endif %}"
+       class="ms-2 text-secondary text-decoration-none small"
+       title="Daily balance">Dynamic
+    </a>
+</span>
 </h4>
 
 <div class="filters-actions-wrapper mb-3 d-flex flex-wrap align-items-center justify-content-between" style="gap: 0.75rem;">
