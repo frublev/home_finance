@@ -19,7 +19,7 @@
 
                 <div class="d-flex flex-wrap gap-1" id="tags-list"></div>
 
-                <input name="transaction_tags" id="transaction_tags_input" value="{% for tag in transaction.tags.all %}{{ tag.name }}{% if not forloop.last %},{% endif %}{% endfor %}">
+                <input type="hidden" name="transaction_tags" id="transaction_tags_input" value="{% for tag in transaction.tags.all %}{{ tag.name }}{% if not forloop.last %},{% endif %}{% endfor %}">
             </div>
 
 <!--            {% if transaction.category.tags.exists %}-->

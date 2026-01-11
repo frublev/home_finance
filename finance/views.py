@@ -947,8 +947,23 @@ def delete_transfer(request, transfer_id):
 
         # return redirect("transfer_list")
 
+@login_required
 def account_balance_period(request, account_id):
-    account = get_object_or_404(Account, id=account_id)
+    if account_id != 0:
+        account = get_object_or_404(Account, id=account_id)
+        current_balance = account.balance
+        account_name = account.name
+        account_currency_symbol = account.currency_symbol
+    else:
+        account = None
+        # Суммируем все текущие балансы
+        current_balance = Account.objects.aggregate(
+            total_balance=Sum('balance')
+        )['total_balance'] or 0
+        accounts_list = Account.objects.all()  # все счета
+        account_name = 'Total balance'
+        account_currency_symbol = '€'
+
     filter_by = request.GET.get('filter', 'month')
     # --- parse dates ---
     today = datetime.today().date()
@@ -965,25 +980,16 @@ def account_balance_period(request, account_id):
     if start_date > end_date:
         return JsonResponse({"error": "start_date must be <= end_date"}, status=400)
 
-    # --- 1️⃣ стартовый баланс ---
-    last_balance = (
-        DailyBalance.objects
-        .filter(account=account, date__lt=start_date)
-        .order_by("-date")
-        .first()
+    tx_qs = Transaction.objects.filter(
+        transaction_time__date__gt=start_date,
+        transaction_time__date__lte=today
     )
 
-    balance = last_balance.balance if last_balance else Decimal("0")
+    if account:
+        tx_qs = tx_qs.filter(account=account)
 
-    # --- 2️⃣ агрегируем транзакции ОДНИМ запросом ---
     tx_by_day = (
-        Transaction.objects
-        .filter(
-            account=account,
-            transaction_time__date__gte=start_date,
-            transaction_time__date__lte=end_date
-        )
-        .annotate(
+        tx_qs.annotate(
             tx_date=F("transaction_time__date"),
             signed_amount=Case(
                 When(category__type__in=["Outcome", "Transfer_from"], then=-F("amount")),
@@ -993,68 +999,40 @@ def account_balance_period(request, account_id):
         )
         .values("tx_date")
         .annotate(day_sum=Sum("signed_amount"))
-        .order_by("tx_date")
     )
 
     tx_map = {row["tx_date"]: row["day_sum"] for row in tx_by_day}
 
-    # --- 3️⃣ существующие дневные балансы ---
-    existing = {
-        d.date: d
-        for d in DailyBalance.objects.filter(
-            account=account,
-            date__gte=start_date,
-            date__lte=end_date
-        )
-    }
+    # 3️⃣ Двигаемся НАЗАД
+    balances = []
+    balance = current_balance
+    current_date = end_date
 
-    to_create = []
-    to_update = []
+    while current_date >= start_date:
+        balances.append({
+            "date": current_date.isoformat(),
+            "balance": float(balance)
+        })
 
-    current_date = start_date
-
-    while current_date <= end_date:
         if current_date in tx_map:
-            balance += tx_map[current_date]
+            balance -= tx_map[current_date]
 
-        if current_date in existing:
-            obj = existing[current_date]
-            if obj.balance != balance:
-                obj.balance = balance
-                to_update.append(obj)
-        else:
-            to_create.append(
-                DailyBalance(
-                    account=account,
-                    date=current_date,
-                    balance=balance
-                )
-            )
+        current_date -= timedelta(days=1)
 
-        current_date += timedelta(days=1)
+    balances.reverse()
 
-    # --- 4️⃣ массовая запись ---
-    if to_create:
-        DailyBalance.objects.bulk_create(to_create)
-
-    if to_update:
-        DailyBalance.objects.bulk_update(to_update, ["balance"])
-
-    balances = [{"date": d.date.isoformat(), "balance": float(d.balance)}
-            for d in sorted(
-                list(existing.values()) + to_create,
-                key=lambda x: x.date
-            )]
+    balances = [
+        b for b in balances
+        if b["date"] <= end_date.isoformat()
+    ]
 
     balance0 = balances.pop(0)
+
     delta = balances[-1]['balance'] - balance0['balance']
 
-    account_name = Account.objects.filter(id=account_id).first()
-    account_currency_symbol = account_name.currency_symbol
-
     return render(request, "daily_balance.html",{
-        "account": account.name,
-        "currency": account.currency,
+        # "account": account.name,
+        # "currency": account.currency,
         "start": start_date.isoformat(),
         "end": end_date.isoformat(),
         "balances": balances,
@@ -1065,17 +1043,3 @@ def account_balance_period(request, account_id):
         "account_currency_symbol": account_currency_symbol,
         "account_balance":delta
     })
-
-    # return JsonResponse({
-    #     "account": account.name,
-    #     "currency": account.currency,
-    #     "start": start_date.isoformat(),
-    #     "end": end_date.isoformat(),
-    #     "balances": [
-    #         {"date": d.date.isoformat(), "balance": float(d.balance)}
-    #         for d in sorted(
-    #             list(existing.values()) + to_create,
-    #             key=lambda x: x.date
-    #         )
-    #     ]
-    # })
